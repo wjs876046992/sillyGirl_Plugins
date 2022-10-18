@@ -3,7 +3,7 @@
 * @title 口令解析手动版
 * @version v1.0.0
 * @create_at 2022-09-08 15:06:22
-* @description jx +口令,用于某些特殊口令，须安装somethong模块
+* @description jx +口令,用于某些特殊口令，须安装something模块
 * @platform qq wx tg pgm sxg
 * @rule raw jx [\s\S]*
 * @priority 100

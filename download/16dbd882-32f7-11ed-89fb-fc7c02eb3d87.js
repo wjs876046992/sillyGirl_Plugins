@@ -2,7 +2,7 @@
 * @author https://t.me/sillyGirl_Plugin
 * @version v1.0.0
 * @create_at 2022-09-19 15:06:22
-* @description nark对接，默认禁用
+* @description nark对接，默认禁用,可填写默认上车服务器
 * @title nark登陆
 * @rule 登陆|登录
  * @public false
@@ -23,7 +23,7 @@ function main(){
 		s.reply("未对接登陆，请联系管理员")
 		return
 	}
-	try{
+//	try{
 		s.reply("请输入电话号码：")
 		let inp1=s.listen(WAIT)
 		if(inp1==null){
@@ -41,10 +41,10 @@ function main(){
 		})
 		//console.log(resp1)
 		if(!JSON.parse(resp1.body).success){
-			console.log("手机号发送失败")
+			s.reply("手机号发送失败")
 			return false
 		}
-		s.reply("请输入验证码")
+		s.reply("请输入验证码：")
 		let inp2=s.listen(WAIT)
 		if(inp2==null){
 			s.reply("输入超时，请重新登陆")
@@ -62,8 +62,7 @@ function main(){
 		})
 		let data=JSON.parse(resp2.body)
 		if(!data.success){
-			console.log(data.message)
-			s.reply("提交验证码错误")
+			s.reply(data.message)
 			return
 		}
 		let QLS=JSON.parse((new Bucket("qinglong")).get("QLS"))
@@ -72,16 +71,22 @@ function main(){
 			s.reply("token获取失败，上车失败")
 			return
 		}
+		else
+			console.log(data.data.ck)
 		if(Submit_QL_Env(QLS[DefaultQL-1].host,ql_token,"JD_COOKIE",data.data.ck,"")){
-			sillyGirl.notifyMasters(data.data.ck.match(/(?<=pin=)\w+/)+",已更新账号")
+			let pin=data.data.ck.match(/(?<=pin=)[^;]+/)[0]
+			let imType=s.getPlatform()
+			let bind=new Bucket("pin"+imType.toUpperCase())
+			bind.set(pin,s.getUserId())
+			sillyGirl.notifyMasters(pin+",已更新账号")
 			s.reply("上车成功")
 		}
 		else
 			s.reply("ck提交失败，上车失败")
-	}
-	catch(err){
-		return err
-	}
+	// }
+	// catch(err){
+	// 	return s.reply(err)
+	// }
 }
 
 function Submit_QL_Env(host,token,name,value,remark){
@@ -93,7 +98,7 @@ function Submit_QL_Env(host,token,name,value,remark){
 	if(index==-1)
 		return ql.Add_QL_Env(host,token,{"name":name,"value":value,"remarks":remark})
 	else{
-		if(envs[index].id)
+		if(typeof(envs[index].id)=="number")
 			return ql.Update_QL_Env(host,token,envs[index].id,name,value,envs[index].remarks)
 		else
 			return ql.Update_QL_Env(host,token,envs[index]._id,name,value,envs[index].remarks)

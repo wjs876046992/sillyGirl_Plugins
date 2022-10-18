@@ -1,7 +1,7 @@
 /*
 * @author https://t.me/sillyGirl_Plugin
 * @create_at 2022-09-07 18:24:50
-* @description 芝士功能补全，须安装somethong与qinglong模块
+* @description 芝士功能补全，须安装something与qinglong模块
 * @title 芝士plus
 * @platform qq wx tg pgm sxg
 * @rule raw 交换\s\d+\s\d+
@@ -14,6 +14,7 @@
 * @rule raw 豆\d+
 * @rule raw 豆\s[\d]+\s[\d]+
 * @rule 保存昵称
+* @rule ck去重
 * @rule raw 获取\S+昵称
 * @rule raw 查找\s\S+
  * @public false
@@ -156,8 +157,15 @@ function main(){
 	
 	else if(msg.indexOf("查找")!=-1)
 		GetJDCOOKIE(QLS,msg.match(/(?<=查找\s)\S+/)[0])
+	
+	else if(msg=="ck去重")
+		s.reply(Reduce_JDCK_Repetition(QLS))
 		
 	return
+}
+
+function Reduce_JDCK_Repetition(QLS){
+	
 }
 
 function GetJDCOOKIE(QLS,kickname){
@@ -398,9 +406,9 @@ function Recovery_qlEnv(QLS){
 					notify+="恢复变量:"+backup[i].envs[j].name+"\n"
 			}
 		}
-		
+		console.log(JSON.stringify(addenvs))
 //		s.reply(JSON.stringify(addenvs))
-		addenvs=JSON.parse(JSON.stringify(addenvs))//????
+//		addenvs=JSON.parse(JSON.stringify(addenvs))//????
 //		s.reply(JSON.stringify(addenvs))
 		if(addenvs.length>0)
 			suss=ql.Add_QL_Env(ql_host,ql_token,addenvs)
@@ -408,7 +416,7 @@ function Recovery_qlEnv(QLS){
 			s.reply("该备份容器所有变量已存在于选择的容器中,已忽略")
 			continue
 		}
-		if(suss!=null)
+		if(suss)
 			s.reply("成功恢复\n备份容器【"+backup[i].name+"】-->【"+QLS[inp].name+"】\n共"+addenvs.length+"个变量\n----------------\n"+notify)
 		else
 			s.reply("恢复失败") 
@@ -507,12 +515,9 @@ function Delete_JDCK_disabled(QLS){
 
 function Notify_JDCK_disabled(QLS){
 	let tipid=s.reply("正在为您通知...")
-	let flag=0
 	let notify=""
 	let record=[]//记录已通知pin，防止多容器存在同一账号时重复通知
-	let dis_pin_num=0
-	let gn=new Bucket("GroupNotify")
-	let toType=gn.keys()
+	let toType=(new Bucket("GroupNotify")).keys()
 	for(let j=0;j<QLS.length;j++){
 		if(QLS[j].disable)
 			continue
@@ -532,13 +537,14 @@ function Notify_JDCK_disabled(QLS){
 		notify=notify+"\n---------------------\n【"+QLS[j].name+"】\n"
 		for(let i=0;i<envs.length;i++){
 			if(envs[i].name=="JD_COOKIE"&&envs[i].status==1){
-				dis_pin_num++//统计失效账号数量
-				let pin=envs[i].value.match(/(?<=pt_pin=)\S+(?=;)/g)[0]
+				//console.log(envs[i].value)
+				let pin=envs[i].value.match(/(?<=pt_pin=)[^;]+/)[0]
 				let name=GetName(envs[i].value)//获取通知应该使用的称呼					
 				if(record.indexOf(pin)==-1){//避免多容器重复通知
 					notify=notify+"\n变量"+(i+1)+"【"+pin+"】\n"
 					if(toType==""){//一对一通知
-					let to=st.NotifyPin(pin,"温馨提示，您的账号【"+name+"】已过期，请重新登陆")
+						let to=st.NotifyPin(pin,"温馨提示，您的账号【"+name+"】已过期，请重新登陆")
+						console.log(envs[i].value+"\n"+JSON.stringify(to))
 						if(to.length!=0){
 							record.push(pin)//记录已通知pin
 							for(let k=0;k<to.length;k++)
@@ -566,10 +572,10 @@ function Notify_JDCK_disabled(QLS){
 		}
 	}
 	s.recallMessage(tipid)
-	if(dis_pin_num==0)
+	if(!record.length)
 		return "您的客户全都没有失效耶~"
 	else
-		return "共"+dis_pin_num+"个账号失效"+notify	
+		return "共"+record.length+"个账号失效"+notify	
 }
 
 function Move_qlEnv(QLS,from,to_index){
@@ -669,10 +675,14 @@ function Get_QL(QLS){
 			notify=notify+(i+1)+"、"+QLS[i].name+"\n"
 		}
 		s.reply(notify)
-		let inp=input(15000)
-		if(inp==""||inp=="q"||inp.match(/^\d+$/g)==null||inp>QLS.length)
+		let inp=s.listen(15000)
+		//if(inp==""||inp=="q"||inp.match(/^\d+$/g)==null||inp>QLS.length)
+		if(inp==null)
 			return -1
-		let n=Number(inp)-1
+		let n=s.getContent()
+		if(n=="q"||n>QLS.length)
+			return -1
+		n=n-1
 		ql_host=QLS[n].host
 		ql_client_id=QLS[n].client_id
 		ql_client_secret=QLS[n].client_secret

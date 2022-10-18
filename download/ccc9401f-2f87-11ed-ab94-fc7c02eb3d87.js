@@ -75,12 +75,12 @@ function main(){
 						let tip="温馨提醒，您的账号【"+GetName(envs[j].value)+"】有"
 						tip+=redpackets_data.expiredBalance+"元红包与"+exbeans+"京豆将于近期过期"
 						console.log(pin+tip)
-						if(record.indexOf(pin)==-1){//console.log(pin+tip)
+						//if(record.indexOf(pin)==-1){
 							st.NotifyPin(pin,tip)
-							notify+="【"+pin+"】:"+redpackets_data.expiredBalance+"\n"
+							notify+="【"+pin+"】:\n红包:"+redpackets_data.expiredBalance+"\t京豆:"+exbeans+"\n"
 							record.push(pin)
 							sleep(Math.random()*10000+10000)
-						}
+						//}
 					}
 				}
 				else

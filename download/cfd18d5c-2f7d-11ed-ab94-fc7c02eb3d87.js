@@ -3,7 +3,7 @@
 * @module true
 * @create_at 2022-09-09 16:30:33
 * @description 青龙模块
-* @version v1.0.0
+* @version v1.0.1
  * @public false
 * @title qinglong
 */
@@ -152,7 +152,7 @@ function Spy_QL_Task (host,token, envs, keywords) {
 		if(keywords.some((value,index,array)=>
 			crons[i].command.indexOf(value) != -1 || crons[i].name.indexOf(value) != -1
 		)){
-			if(crons[i]["id"]!=undefined)
+			if(crons[i]["id"])
 				ids.push(crons[i].id)
 			else
 				ids.push(crons[i]._id)
@@ -278,7 +278,7 @@ function Add_QL_Env(host,token,envs){
 //成功返回修改后的环境变量对象
 function Update_QL_Env(host,token,id,name,value,remark){
 	let body
-	if(id.search(/[^\d]/g)!=-1)
+	if(typeof(id)=="string")
 		body={"value": value,"name": name,"remarks": remark,"_id":id}
 	else
 		body={"value": value,"name": name,"remarks": remark,"id":id}
@@ -543,7 +543,7 @@ function Add_QL_Cron(host,token,name,task,cron){
 //修改任务
 function Update_QL_Cron(host,token,id,name,task,cron){
 	let body
-	if(id.search(/[^\d]/g)!=-1)
+	if(typeof(id)=="string")
 		body={"command": task,"name": name,"schedule": cron,"_id":id}
 	else
 		body={"command": task,"name": name,"schedule": cron,"id":id}

@@ -18,7 +18,7 @@
 * @rule 清空白眼数据
 * @priority 10
  * @public false
-* @version v1.3.1
+* @version v1.3.2
 */
 
 
@@ -38,7 +38,7 @@
 恢复ql spy:
 即将jd_cookie env_listens_backup数据恢复至jd_cookie env_listens
 
-导入出白眼：选择一次性导出项数过多时可能会导出失败，建议选择10项左右
+导出白眼：选择一次性导出项数过多时可能会导出失败，建议选择10项左右
 
 导入白眼数据：
 将导出的信息发送给机器人即可，会默认仅添加自己没有监控的变量的任务，如果信息中容器非本人容器，将会默认使添加的监控任务使用傻妞所绑定的所有非禁用容器作为作用容器
@@ -81,6 +81,7 @@ const DecodeUrlEnv=false
 2022-9-16 v1.2.6 队列任务对应青龙任务处于空闲状态，不受监控任务间隔限制立即执行
 2022-9-20 v1.2.9 修复监控容器存在空任务时报错、部分链接识别错误以及监控任务设置时间隔后处理队列时的误报找不到青龙任务
 2022-9-21 v1.3.0 修复任务时间间隔失效问题
+2022-10-15 v1.3.2 链接解析规则支持正则
 
 
 
@@ -162,14 +163,11 @@ function main() {
 		//链接监控
 		else if (msg.indexOf("http") != -1) {
 			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*/g)
-			//			s.reply(urls.toString())
 			Urls_Decode(urls)
-			//			isspy=true	
 		}
 		//口令监控
 		else if (msg.match(/[(|)|#|@|$|%|¥|￥|!|！][0-9a-zA-Z]{10,14}[(|)|#|@|$|%|¥|￥|!|！]/g) != null) {
 			JDCODE_Decode(msg)
-			//			isspy=true	
 		}
 		s.continue()
 	//   }
@@ -1141,7 +1139,7 @@ function Que_Manager(QLS) {
 function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 	let spy = []//解析结果：[{name:监控变量名,value:监控变量值,act:活动任务名}]
 	for (let i = 0; i < urldecodes.length; i++) {
-		if (url.indexOf(urldecodes[i].keyword) != -1) {//console.log("找到链接解析规则"+urldecodes[i].keyword)
+		if (url.match(urldecodes[i].keyword) != null) {//console.log("找到链接解析规则"+urldecodes[i].keyword)
 			for (let j = 0; j < urldecodes[i].trans.length; j++) {
 				let temp = {
 					act: urldecodes[i].name,
@@ -1509,7 +1507,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: "wxDrawActivity/activity",
+			keyword: /wxDrawActivity|lzclient/,
 			name: "幸运抽奖",
 			trans: [{
 				ori: "-1",
@@ -1517,23 +1515,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: "https://lzkj-isv.isvjcloud.com/lzclient",
-			name: "幸运抽奖",
-			trans: [{
-				ori: "-1",
-				redi: "LUCK_DRAW_URL"//kr
-			}]
-		},
-		{
-			keyword: "https://lzkj-isv.isvjd.com/lzclient",
-			name: "幸运抽奖",
-			trans: [{
-				ori: "-1",
-				redi: "LUCK_DRAW_URL"//kr
-			}]
-		},
-		{
-			keyword: "https://lzkj-isv.isvjcloud.com/wxgame/activity",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxgame/,
 			name: "LZ店铺游戏",
 			trans: [{
 				ori: "activityId",
@@ -1541,7 +1523,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: "https://lzkjdz-isv.isvjcloud.com/wxSecond",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxSecond/,
 			name: "LZ读秒拼手速",
 			trans: [{
 				ori: "activityId",
@@ -1566,19 +1548,10 @@ var DefaultUrlDecode =[
 				redi: "jd_wxShopFollowActivity_activityUrl"
 			}]
 		},
-
-		{
-			keyword: "https://cjhydz-isv.isvjcloud.com/wxShopFollowActivity/activity",
-			name: "CJ店铺关注抽奖",
-			trans: [{
-				ori: "activityId",
-				redi: "jd_cjwxShopFollowActivity_activityId"//kr
-			}]
-		},
 		
 
 		{
-			keyword: "https://lzkj-isv.isvjcloud.com/drawCenter",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/drawCenter/,
 			name: "LZ刮刮乐",
 			trans: [{
 				ori: "activityId",
@@ -1587,15 +1560,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://lzkjdz-isv.isvjcloud.com/wxFansInterActionActivity",
-			name: "LZ粉丝互动",
-			trans: [{
-				ori: "activityId",
-				redi: "jd_wxFansInterActionActivity_activityId"
-			}]
-		},
-		{
-			keyword: "https://lzkjdz-isv.isvjd.com/wxFansInterActionActivity",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxFansInterActionActivity/,
 			name: "LZ粉丝互动",
 			trans: [{
 				ori: "activityId",
@@ -1605,15 +1570,7 @@ var DefaultUrlDecode =[
 
 
 		{
-			keyword: "https://lzkjdz-isv.isvjcloud.com/wxShareActivity/activity/",
-			name: "LZ分享有礼",
-			trans: [{
-				ori: "activityId",
-				redi: "jd_wxShareActivity_activityId"
-			}]
-		},
-		{
-			keyword: "https://lzkjdz-isv.isvjd.com/wxShareActivity/activity/",
+			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxShareActivity/,
 			name: "LZ分享有礼",
 			trans: [{
 				ori: "activityId",
@@ -1639,7 +1596,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: "https://cjhy-isv.isvjcloud.com/sign/sevenDay/signActivity",
+			keyword: /https:\/\/cjhy-isv.isvj(clou)?d.com\/sign\/sevenDay\/signActivity/,
 			name: "CJ超级店铺无线签到",
 			trans: [{
 				ori: "activityId",
@@ -1647,15 +1604,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: "https://cjhy-isv.isvjd.com/sign/sevenDay/signActivity",
-			name: "CJ超级店铺无线签到",
-			trans: [{
-				ori: "activityId",
-				redi: "CJHY_SEVENDAY"
-			}]
-		},
-		{
-			keyword: "https://lzkj-isv.isvjcloud.com/sign/signActivity2",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/sign\/signActivity/,
 			name: "LZ超级店铺无线签到",
 			trans: [{
 				ori: "activityId",
@@ -1663,15 +1612,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: "https://lzkj-isv.isvjd.com/sign/signActivity",
-			name: "LZ超级店铺无线签到",
-			trans: [{
-				ori: "activityId",
-				redi: "LZKJ_SIGN"
-			}]
-		},
-		{
-			keyword: "https://lzkj-isv.isvjcloud.com/sign/sevenDay/signActivity",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/sign\/sevenDay/,
 			name: "LZ超级店铺无线签到",
 			trans: [{
 				ori: "activityId",
@@ -1680,15 +1621,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://lzkjdz-isv.isvjcloud.com/wxUnPackingActivity/activity/",
-			name: "LZ让福袋飞",
-			trans: [{
-				ori: "activityId",
-				redi: "jd_wxUnPackingActivity_activityId"
-			}]
-		},
-		{
-			keyword: "https://lzkjdz-isv.isvjd.com/wxUnPackingActivity/activity/activity",
+			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxUnPackingActivity/,
 			name: "LZ让福袋飞",
 			trans: [{
 				ori: "activityId",
@@ -1721,7 +1654,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://lzkj-isv.isvjcloud.com/wxBuildActivity/activity",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxBuildActivity/,
 			name: "LZ盖楼有礼",
 			trans: [{
 				ori: "activityId",
@@ -1730,7 +1663,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://lzkj-isv.isvjcloud.com/wxKnowledgeActivity/activity",
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxKnowledgeActivity/,
 			name: "LZ知识超人",
 			trans: [{
 				ori: "activityId",
@@ -1748,15 +1681,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://lzkj-isv.isvjcloud.com/wxShopGift/activity",
-			name: "LZ特效店铺有礼",
-			trans: [{
-				ori: "-1",
-				redi: "jd_wxShopGift_activityUrl"//kr
-			}]
-		},
-		{
-			keyword: "https://lzkj-isv.isvjd.com/wxShopGift/activity",
+			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxShopGift/,
 			name: "LZ特效店铺有礼",
 			trans: [{
 				ori: "-1",
@@ -1771,6 +1696,40 @@ var DefaultUrlDecode =[
 				redi: "jd_wxShopGift_activityUrl"//kr
 			}]
 		},
+
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/cart_item",
+			name: "收藏大师-加购有礼",
+			trans: [{
+				ori: "-1",
+				redi: "jd_cart_item_activityUrl"//kr
+			}]
+		},
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/collect_item",
+			name: "收藏大师-关注有礼",
+			trans: [{
+				ori: "-1",
+				redi: "jd_collect_item_activityUrl"//kr
+			}]
+		},
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/collect_shop",
+			name: "收藏大师-关注商品",
+			trans: [{
+				ori: "-1",
+				redi: "jd_collect_shop_activityUrl"//kr
+			}]
+		},
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/lottery",
+			name: "收藏大师-幸运抽奖",
+			trans: [{
+				ori: "-1",
+				redi: "jd_lottery_activityUrl"//kr
+			}]
+		},
+
 
 		{
 			keyword: "https://cjhy-isv.isvjcloud.com/wxInviteActivity/openCard/invitee",
@@ -1798,6 +1757,8 @@ var DefaultUrlDecode =[
 				redi: "DPLHTY"
 			}]
 		},
+
+
 	
 	/*******************环境保护库********************** */	
 		{
