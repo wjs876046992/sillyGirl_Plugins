@@ -1,12 +1,13 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.0
+* @version v1.0.1
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用,可填写默认上车服务器
 * @title nark登陆
 * @rule 登陆|登录
-* @rule raw [\S ]+?pin=[^;]+; wskey=[^;]+;[\S ]+
-* @rule raw [\S ]+?pt_key=[^;]+; pt_pin=[^;]+;[\S ]+
+* @rule raw [\S ]*?pin=[^;]+; ?wskey=[^;]+;[\S ]*
+* @rule raw [\S ]*?pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
+* @priority 1
  * @public false
 * @disable false
 */
@@ -62,6 +63,7 @@ function main(){
   					"Code": inp2.getContent()
 				})
 		if(!data.success){
+			console.log(data)
 			s.reply(data.message)
 			return
 		}
@@ -76,7 +78,8 @@ function main(){
 		env.name="JD_COOKIE"
 		env.value=s.getContent().match(/pt_key=[^;]+; pt_pin=[^;]+;/)[0]
 	}
-	
+	console.log(JSON.stringify(env))
+
 	let QLS=JSON.parse((new Bucket("qinglong")).get("QLS"))
 	let ql_token=ql.Get_QL_Token(QLS[DefaultQL-1].host,QLS[DefaultQL-1].client_id,QLS[DefaultQL-1].client_secret)
 	if(!ql_token){
@@ -112,12 +115,15 @@ function Submit_Nark(api,body){
 			body:body
 		})
 		let data=JSON.parse(resp.body)
-		if(data.success)
+		if(data.success){
+			if(data.data.ck)
+				msg=data.data.ck
+			else
+				return {success:true,message:JSON.stringify(data)}
 			break
+		}
 		else if(data.message)
 			msg=data.message
-		else if(data.data.ck)
-			msg=data.data.ck
 		sleep(1000)
 	}
 	if(count==TRY_TIMES){
@@ -131,13 +137,18 @@ function Submit_Nark(api,body){
 }
 
 function SubmitJD(host,token,env){
+	let pin=env.value.match(/(?<=pin=)[^;]+/)
+	if(pin==null)
+		return false
+	else
+		pin=pin.toString()
 	let envs=ql.Get_QL_Envs(host,token)
 	if(envs==null)
 		return false
-	let pin=env.value.match(/(?<=pin=)[^;]+/)[0]
+	
 	let index=envs.findIndex(Ele=>Ele.name==env.name&&Ele.value.match(/(?<=pin=)[^;]+/)[0]==pin)
 	if(index==-1)
-		return ql.Add_QL_Env(host,token,env)
+		return ql.Add_QL_Env(host,token,[env])
 	else{
 		if(typeof(envs[index].id)=="number")
 			return ql.Update_QL_Env(host,token,envs[index].id,env.name,env.value,envs[index].remarks)

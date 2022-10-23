@@ -66,7 +66,7 @@ function Sample(){
 //	s.reply(host)*/
 //	s.reply(JSON.stringify(Get_QL_Token(host,client_id,client_secret)))
 //	s.reply(Get_QL_Version(host,token))
-//	let login=QL_Login(host,"Leven_Yi","QL@Leven315")
+//	let login=QL_Login(host,"username","passsword")
 //	s.reply("login:"+login)
 	
 //	s.reply(JSON.stringify(Get_QL_SeqLogClear(host,token)))

@@ -12,6 +12,7 @@
 * @rule 监控管理
 * @rule 导出白眼
 * @rule raw ImportWhiteEye=[\S\s]+
+* @rule 天王盖地虎
 * @rule 监控状态
 * @rule 清空监控队列
 * @rule 清空监控记录
@@ -195,6 +196,17 @@ function main() {
 
 	else if (msg.match(/^ImportWhiteEye=\S+/) != null)
 		s.reply(Import_Spy(msg.match(/(?<=ImportWhiteEye=)[\s\S]+/g)[0]))
+
+	else if(msg=="天王盖地虎"){
+		let data=db.get("spy_targets_new")
+		if(data=="")
+			targets=[]
+		else
+			targets=JSON.parse(data)
+		targets.push({name:s.getChatId(),id:s.getChatId()})
+		db.set("spy_targets_new",JSON.stringify(targets))
+		s.reply("宝塔镇河妖")
+	}
 
 	else if (msg == "监控管理")
 		Spy_Manager()
@@ -1461,7 +1473,7 @@ function Print_SpyUrl(decodes) {
 var DefaultUrlDecode =[
 		/******************KR库********************** */
 		{
-			keyword: "https://cjhydz-isv.isvjcloud.com/wxTeam/activity",
+			keyword: /https:\/\/cjhydz-isv.isvjcloud.com\/wxTeam\/activity/,
 			name: "CJ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1470,7 +1482,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://lzkjdz-isv.isvjcloud.com/wxTeam/activity",
+			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxTeam\/activity/,
 			name: "LZ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1857,87 +1869,87 @@ var DefaultUrlDecode =[
 
 
 	/*******************wall库********************* */
-		// {
-		// 	keyword: "wxCollectionActivity/activity",
-		// 	name: "M加购有礼",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_ADD_CART_URL"//wall
-		// 	}]
-		// },
-		// {
-		// 	keyword: "wxDrawActivity/activity",
-		// 	name: "幸运抽奖",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_LUCK_DRAW_URL"//wall
-		// 	}]
-		// },
-		// {
-		// 	keyword: "https://lzkj-isv.isvjcloud.com/lzclient",
-		// 	name: "幸运抽奖",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_LUCK_DRAW_URL"//wall
-		// 	}]
-		// },
-		// {
-		// 	keyword: "https://lzkjdz-isv.isvjcloud.com/wxSecond",
-		// 	name: "M读秒手速",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_SECOND_DRAW_URL"
-		// 	}]
-		// },
-		// {
-		// 	keyword: "https://cjhy-isv.isvjcloud.com/wxShopFollowActivity/activity",
-		// 	name: "M关注抽奖",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_FOLLOW_DRAW_URL"
-		// 	}]
-		// },
-		// {
-		// 	keyword: "https://lzkj-isv.isvjcloud.com/drawCenter",
-		// 	name: "M老虎机抽奖",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_CENTER_DRAW_URL"
-		// 	}]
-		// },
-		// {
-		// 	keyword: "https://cjhy-isv.isvjcloud.com/mc/wxMcLevelAndBirthGifts/activity",
-		// 	name: "M等级/生日礼包",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_LEVEL_BIRTH_URL"
-		// 	}]
-		// },
-		// {
-		// 	keyword: "https://lzkj-isv.isvjd.com/wxBuildActivity/activity",
-		// 	name: "M盖楼领奖",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_BUILD_DRAW_URL"
-		// 	}]
-		// },
+	/*	{
+			keyword: "wxCollectionActivity/activity",
+			name: "M加购有礼",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_ADD_CART_URL"//wall
+			}]
+		},
+		{
+			keyword: "wxDrawActivity/activity",
+			name: "幸运抽奖",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_LUCK_DRAW_URL"//wall
+			}]
+		},
+		{
+			keyword: "https://lzkj-isv.isvjcloud.com/lzclient",
+			name: "幸运抽奖",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_LUCK_DRAW_URL"//wall
+			}]
+		},
+		{
+			keyword: "https://lzkjdz-isv.isvjcloud.com/wxSecond",
+			name: "M读秒手速",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_SECOND_DRAW_URL"
+			}]
+		},
+		{
+			keyword: "https://cjhy-isv.isvjcloud.com/wxShopFollowActivity/activity",
+			name: "M关注抽奖",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_FOLLOW_DRAW_URL"
+			}]
+		},
+		{
+			keyword: "https://lzkj-isv.isvjcloud.com/drawCenter",
+			name: "M老虎机抽奖",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_CENTER_DRAW_URL"
+			}]
+		},
+		{
+			keyword: "https://cjhy-isv.isvjcloud.com/mc/wxMcLevelAndBirthGifts/activity",
+			name: "M等级/生日礼包",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_LEVEL_BIRTH_URL"
+			}]
+		},
+		{
+			keyword: "https://lzkj-isv.isvjd.com/wxBuildActivity/activity",
+			name: "M盖楼领奖",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_BUILD_DRAW_URL"
+			}]
+		},
 
-		// {
-		// 	keyword: "https://lzkj-isv.isvjcloud.com/wxShopGift/activity",
-		// 	name: "M关注有礼无线",
-		// 	trans: [{
-		// 		ori: "-1",
-		// 		redi: "M_WX_SHOP_GIFT_URL"
-		// 	}]
-		// },
-	//	{
-		// 	keyword: "https://lzkjdz-isv.isvjcloud.com/wxCollectCard",
-		// 	name: "M集卡抽奖",
-		// 	trans: [{
-		// 		ori: -1,
-		// 		redi: "M_WX_COLLECT_CARD_URL"//wall
-		// 	}]
-		// }
+		{
+			keyword: "https://lzkj-isv.isvjcloud.com/wxShopGift/activity",
+			name: "M关注有礼无线",
+			trans: [{
+				ori: "-1",
+				redi: "M_WX_SHOP_GIFT_URL"
+			}]
+		},
+		{
+			keyword: "https://lzkjdz-isv.isvjcloud.com/wxCollectCard",
+			name: "M集卡抽奖",
+			trans: [{
+				ori: -1,
+				redi: "M_WX_COLLECT_CARD_URL"//wall
+			}]
+		}*/
 ]
 
 
