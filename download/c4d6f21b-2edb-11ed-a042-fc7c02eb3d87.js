@@ -5,7 +5,7 @@
 * @title 白眼
 * @platform qq wx tg pgm sxg
 * @rule raw [\s\S]*?[(|)|#|@|$|%|¥|￥|!|！]([0-9a-zA-Z]{10,14})[(|)|#|@|$|%|¥|￥|!|！][\s\S]*
-* @rule raw [\s\S]*?(https:\/\/(.{2,}\.)(isvjcloud|isvjd)\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
+* @rule raw [\s\S]*?https:\/\/(.{2,}\.isvj(clou)?d\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
 * @rule raw [\s\S]*?https://(prodev\.m|jdjoy)\.jd\.com[\s\S]*
 * @rule raw [\s\S]*?export \w+[ ]*=[ ]*"[^"]+"[\s\S]*
 * @rule 恢复ql spy
@@ -344,7 +344,7 @@ function Spy_Manager() {
 						s.reply("请输入该转换任务的备注名称：")
 						tran.name = s.listen(WAIT).getContent()
 						trans.push(tran)
-						s.reply("已添加变量转换任务\n【" + tran.name + "】:" + tran.ori + "-->" + tran.redi + "\n您可以继续添加转换变量或者返回上一级菜单")
+						s.reply("已添加变量转换任务\n【" + tran.name + "】:" + tran.ori + "-->" + tran.redi )
 					}
 					catch(err){
 						s.reply("输入超时，请重新添加转换任务")
@@ -390,16 +390,16 @@ function Spy_Manager() {
 						}]
 					}
 					try{
-						s.reply("请输入您想解析链接的关键词(例如：http://xxx.com/yyyy/zzzz/)")
+						s.reply("请输入您想解析链接的关键词(例如：http://xxx.com/yyyy/zzzz/ )")
 						decode.keyword = s.listen(WAIT).getContent()
-						s.reply("请输入您想提取的参数（例如:http://...../?actid=xxx中的actid,若使用整段链接作为变量请输入-1)")
+						s.reply("请输入您想提取的参数（例如:http://...../?actid=xxx 中的actid,若使用整段链接作为变量请输入-1)")
 						decode.trans[0].ori = s.listen(WAIT).getContent()
 						s.reply("请输入您想使用该参数的变量名：")
 						decode.trans[0].redi = s.listen(WAIT).getContent()
 						s.reply("请输入该解析任务的备注名称：")
 						decode.name = s.listen(WAIT).getContent()
 						urldecodes.push(decode)
-						s.reply("已添加" + decode.name + "(" + decode.keyword + "):" + decode.trans[0].ori + "-->" + decode.trans[0].redi + "\n您可以继续添加转换变量或者返回上一级菜单")					
+						s.reply("已添加" + decode.name + "(" + decode.keyword + " ):" + decode.trans[0].ori + "-->" + decode.trans[0].redi )					
 					}
 					catch(err){
 						s.reply("输入超时，请重新添加解析任务")
@@ -1163,13 +1163,11 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 				} 
 				else {//提取参数作为变量
 					let reg = new RegExp("(?<=" + urldecodes[i].trans[j].ori + "=)[^&]+")
-					//console.log("(?<=" + urldecodes[i].trans[j].ori + "=)[^&]+")
-					let actid = url.match(reg);//console.log("提取参数"+actid)
+					let actid = url.match(reg)
 					if (actid != null) {
 						temp["value"] = actid[0]
 						spy.push(temp)
 					}
-
 				}
 			}
 			//				if(spy.length!=0)//成功在配置中找到并将url转换为监控变量
@@ -1449,7 +1447,7 @@ function Print_SpyItem(spy, QLS) {
 
 //打印监控菜单-变量转换页面
 function Print_SpyTran(trans) {
-	let notify = "请选择添加添加或者删除转换变量：\n(-数字删除，0添加,u返回)\n"
+	let notify = "请选择添加或者删除变量转换规则：\n(-数字删除，0添加,u返回)\n"
 	for (let i = 0; i < trans.length; i++)
 		notify += (i + 1) + "、" + trans[i].name + ":" + trans[i].ori + "-->" + trans[i].redi + "\n"
 	s.reply(notify)
@@ -1457,7 +1455,7 @@ function Print_SpyTran(trans) {
 
 //打印监控菜单-链接解析页面
 function Print_SpyUrl(decodes) {
-	let notify = "请选择添加添加或者删除解析链接：\n(-数字删除，0添加,u返回)\n"
+	let notify = "请选择添加添加或者删除链接规则：\n(-数字删除，0添加,u返回)\n"
 	for (let i = 0; i < decodes.length; i++) {
 		notify += (i + 1) + "、" + decodes[i].name + "(" + decodes[i].keyword + "):\n"
 		for (let j = 0; j < decodes[i].trans.length; j++)

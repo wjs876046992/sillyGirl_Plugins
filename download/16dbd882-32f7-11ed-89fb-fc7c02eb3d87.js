@@ -2,9 +2,9 @@
 * @author https://t.me/sillyGirl_Plugin
 * @version v1.0.1
 * @create_at 2022-09-19 15:06:22
-* @description nark对接，默认禁用,可填写默认上车服务器
+* @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
-* @rule 登陆|登录
+* @rule raw 登陆|登录
 * @rule raw [\S ]*?pin=[^;]+; ?wskey=[^;]+;[\S ]*
 * @rule raw [\S ]*?pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
 * @priority 1
@@ -15,11 +15,17 @@
 //默认上车服务器序号
 const DefaultQL=1
 
+//允许上车的群聊白名单id
+const WhiteList=["758657899"]
+
 const ql=require("qinglong")
 
 function main(){
 	const s = sender
 	const sillyGirl=new SillyGirl()
+	if(s.getChatId() && WhiteList.indexOf(s.getChatId())==-1)
+		return
+
 	var env={
 		name:"",
 		value:"",
@@ -70,13 +76,13 @@ function main(){
 		env.name="JD_COOKIE"
 		env.value=data.message
 	}
-	else if(s.getContent().indexOf(wskey)!=-1){
+	else if(s.getContent().indexOf("wskey")!=-1){
 		env.name="JD_WSK"
-		env.value=s.getContent().match(/pin=[^;]+; wskey=[^;]+;/)[0]
+		env.value=s.getContent().match(/pin=[^;]+; ?wskey=[^;]+;/)
 	}
 	else{
 		env.name="JD_COOKIE"
-		env.value=s.getContent().match(/pt_key=[^;]+; pt_pin=[^;]+;/)[0]
+		env.value=s.getContent().match(/pt_key=[^;]+; ?pt_pin=[^;]+;/)
 	}
 	console.log(JSON.stringify(env))
 
@@ -87,13 +93,16 @@ function main(){
 		s.reply(env.value)
 		return
 	}
-	if(SubmitJD(QLS[DefaultQL-1].host,ql_token,env)){
-			let pin=env.value.match(/(?<=pin=)[^;]+/)[0]
-			let imType=s.getPlatform()
-			let bind=new Bucket("pin"+imType.toUpperCase())
-			bind.set(pin,s.getUserId())
+	let result=Submit_JD(QLS[DefaultQL-1].host,ql_token,env)
+	if(result){
+		let pin=env.value.match(/(?<=pin=)[^;]+/).toString()
+		let bind=new Bucket("pin"+s.getPlatform().toUpperCase())
+		bind.set(pin,s.getUserId())
+		if(result==1)
+			sillyGirl.notifyMasters(pin+",已添加账号")
+		else if(result==2)
 			sillyGirl.notifyMasters(pin+",已更新账号")
-			s.reply("上车成功")
+		s.reply("上车成功")
 	}
 	else{
 		s.reply("提交失败，请联系管理员")
@@ -108,7 +117,6 @@ function Submit_Nark(api,body){
 	let count=0
 	let msg=""
 	while(count<TRY_TIMES){
-		count++
 		let resp=request({
    			url:api,
     		method:"post",
@@ -118,25 +126,23 @@ function Submit_Nark(api,body){
 		if(data.success){
 			if(data.data.ck)
 				msg=data.data.ck
-			else
-				return {success:true,message:JSON.stringify(data)}
 			break
 		}
 		else if(data.message)
 			msg=data.message
+		else
+			msg=JSON.stringify(data)
+		count++
 		sleep(1000)
 	}
 	if(count==TRY_TIMES){
-		if(err)
-			return {success:false,message:msg}
-		else
-			return {success:false,message:"网络错误"}
+		return {success:false,message:msg}
 	}
 	else
 		return {success:true,message:msg}
 }
 
-function SubmitJD(host,token,env){
+function Submit_JD(host,token,env){
 	let pin=env.value.match(/(?<=pin=)[^;]+/)
 	if(pin==null)
 		return false
@@ -148,12 +154,19 @@ function SubmitJD(host,token,env){
 	
 	let index=envs.findIndex(Ele=>Ele.name==env.name&&Ele.value.match(/(?<=pin=)[^;]+/)[0]==pin)
 	if(index==-1)
-		return ql.Add_QL_Env(host,token,[env])
-	else{
-		if(typeof(envs[index].id)=="number")
-			return ql.Update_QL_Env(host,token,envs[index].id,env.name,env.value,envs[index].remarks)
+		if(ql.Add_QL_Env(host,token,[env]))
+			return 1
 		else
-			return ql.Update_QL_Env(host,token,envs[index]._id,env.name,env.value,envs[index].remarks)
+			return 0
+	else{
+		if(envs[index].id)
+			id=envs[index].id
+		else
+			id=envs[index]._id
+		if(ql.Update_QL_Env(host,token,id,env.name,env.value,envs[index].remarks))
+			return 2
+		else
+			return 0
 	}
 }
 
