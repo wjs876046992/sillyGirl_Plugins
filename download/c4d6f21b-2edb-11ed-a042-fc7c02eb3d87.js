@@ -812,7 +812,7 @@ function Env_Listen(envs) {
 				for (let k = 0; k < Listens[i].Envs.length; k++) {
 					if (envs[j].name == Listens[i].Envs[k]) {
 						find = true
-						console.log(JSON.stringify(envs[j])+"\n\n"+JSON.stringify(Listens[i].DONE))
+						//console.log(JSON.stringify(envs[j])+"\n\n"+JSON.stringify(Listens[i].DONE))
 						if (IsIn(envs[j], Listens[i].TODO) || IsIn(envs[j], Listens[i].DONE)) {
 							notify +="「" + envs[j].value + " 」重复的变量--任务"+(i+1)+"【" + Listens[i].Name + "】，已忽略\n"
 							//notify+="重复的变量，已忽略\n"
