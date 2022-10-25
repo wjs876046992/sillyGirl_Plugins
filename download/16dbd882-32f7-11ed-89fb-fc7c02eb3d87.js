@@ -1,6 +1,6 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.1
+* @version v1.0.2
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
@@ -15,16 +15,26 @@
 //默认上车服务器序号
 const DefaultQL=1
 
-//允许上车的群聊白名单id
-const WhiteList=["758657899"]
+//允许上车的群聊白名单id,非白名单群禁止上车
+const GroupWhiteList=["758657899"]
+
+//客户黑名单，黑名单客户禁止上车
+const BlackList=[]
 
 const ql=require("qinglong")
 
 function main(){
 	const s = sender
 	const sillyGirl=new SillyGirl()
-	if(s.getChatId() && WhiteList.indexOf(s.getChatId())==-1)
+
+	if(BlackList.indexOf(s.getUserId())!=-1){
+		s.reply("您已被拉黑，请联系管理员")
 		return
+	}
+	else if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
+		s.reply("本群禁止上车")
+		return
+	}
 
 	var env={
 		name:"",
@@ -50,6 +60,10 @@ function main(){
 			return
 		}
 		let Tel=inp1.getContent()
+		if(Tel.length!=11){
+			s.reply("手机号码错误，请重新登陆")
+			return
+		}
 		let data=Submit_Nark(nark+"/api/SendSMS",{"Phone": Tel,"qlkey": 0})
 		if(!data.success){
 			s.reply(data.message)
@@ -61,6 +75,10 @@ function main(){
 		if(inp2==null){
 			s.reply("输入超时，请重新登陆")
 			return null
+		}
+		if(inp2.getContent().length!=6){
+			s.reply("验证错误错误，请重新登陆")
+			return
 		}
 		data=Submit_Nark(nark+"/api/VerifyCode",{
  					"Phone": Tel,
@@ -99,9 +117,9 @@ function main(){
 		let bind=new Bucket("pin"+s.getPlatform().toUpperCase())
 		bind.set(pin,s.getUserId())
 		if(result==1)
-			sillyGirl.notifyMasters(pin+",已添加账号")
+			sillyGirl.notifyMasters(pin+" ("+s.getPlatform()+":"+s.getUserId()+"),已添加账号")
 		else if(result==2)
-			sillyGirl.notifyMasters(pin+",已更新账号")
+			sillyGirl.notifyMasters(pin+" ("+s.getPlatform()+":"+s.getUserId()+"),已更新账号")
 		s.reply("上车成功")
 	}
 	else{

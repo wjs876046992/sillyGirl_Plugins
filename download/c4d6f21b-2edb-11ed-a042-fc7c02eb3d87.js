@@ -61,7 +61,7 @@ const NotifyMode=false
 //监控黑名单
 const BlackList=["162726413"]
 //是否解析链接型变量
-const DecodeUrlEnv=false
+const DecodeUrlEnv=true
 
 /*
 2022-8-27 v1.0.0 
@@ -148,10 +148,12 @@ function main() {
 			let values = msg.match(/(?<=export[ ]+\w+[ ]*=[ ]*")[^"]+(?=")/g)
 			let envs = [],urls=[]
 			if(DecodeUrlEnv){
+				const NoDecode=["jd_zdjr_activityUrl","jd_cjhy_activityUrl","jd_wdz_activityUrl"]
 				names.forEach((ele,index)=>{
-				if(ele.match(/URL|Url/)!=null)
-					urls.push(values[index])
-				})
+					if(ele.match(/URL|Url/)!=null)
+						if(NoDecode.indexOf(ele)==-1)
+							urls.push(values[index])
+					})
 			}
 			for (let i = 0; i < values.length; i++){
 					envs.push({ name: names[i], value: values[i] })
@@ -810,7 +812,7 @@ function Env_Listen(envs) {
 				for (let k = 0; k < Listens[i].Envs.length; k++) {
 					if (envs[j].name == Listens[i].Envs[k]) {
 						find = true
-						//console.log(JSON.stringify(envs[j])+"\n\n"+JSON.stringify(Listens[i].DONE))
+						console.log(JSON.stringify(envs[j])+"\n\n"+JSON.stringify(Listens[i].DONE))
 						if (IsIn(envs[j], Listens[i].TODO) || IsIn(envs[j], Listens[i].DONE)) {
 							notify +="「" + envs[j].value + " 」重复的变量--任务"+(i+1)+"【" + Listens[i].Name + "】，已忽略\n"
 							//notify+="重复的变量，已忽略\n"
@@ -1691,7 +1693,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxShopGift/,
+			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxShopGift/,
 			name: "LZ特效店铺有礼",
 			trans: [{
 				ori: "-1",
