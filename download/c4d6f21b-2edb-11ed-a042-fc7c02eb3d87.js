@@ -59,7 +59,7 @@
 //
 const NotifyMode=false
 //监控黑名单
-const BlackList=["162726413"]
+const BlackList=["162726413","5036494307"]
 //是否解析链接型变量
 const DecodeUrlEnv=true
 
@@ -898,6 +898,7 @@ function JDCODE_Decode(JDCODE) {
 			}
 		}
 	}
+	//console.log(JSON.stringify(info))
 	Notify(st.ToHyperLink(s.getPlatform(),info.jumpUrl,info.title))//口令解析结果通知，不需要自行注释
 	Urls_Decode([info.jumpUrl])
 }
@@ -1572,7 +1573,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxFansInterActionActivity/,
+			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxFansInterActionActivity/,
 			name: "LZ粉丝互动",
 			trans: [{
 				ori: "activityId",

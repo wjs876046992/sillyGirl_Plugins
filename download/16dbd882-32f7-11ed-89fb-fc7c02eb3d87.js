@@ -77,7 +77,7 @@ function main(){
 			return null
 		}
 		if(inp2.getContent().length!=6){
-			s.reply("验证错误错误，请重新登陆")
+			s.reply("验证码错误，请重新登陆")
 			return
 		}
 		data=Submit_Nark(nark+"/api/VerifyCode",{
@@ -95,10 +95,12 @@ function main(){
 		env.value=data.message
 	}
 	else if(s.getContent().indexOf("wskey")!=-1){
+		s.recallMessage(s.getMessageId())
 		env.name="JD_WSK"
 		env.value=s.getContent().match(/pin=[^;]+; ?wskey=[^;]+;/)
 	}
 	else{
+		s.recallMessage(s.getMessageId())
 		env.name="JD_COOKIE"
 		env.value=s.getContent().match(/pt_key=[^;]+; ?pt_pin=[^;]+;/)
 	}

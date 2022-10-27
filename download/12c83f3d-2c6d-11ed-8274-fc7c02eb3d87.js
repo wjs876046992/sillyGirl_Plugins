@@ -679,7 +679,7 @@ function Get_QL(QLS){
 		//if(inp==""||inp=="q"||inp.match(/^\d+$/g)==null||inp>QLS.length)
 		if(inp==null)
 			return -1
-		let n=s.getContent()
+		let n=inp.getContent()
 		if(n=="q"||n>QLS.length)
 			return -1
 		n=n-1

@@ -55,6 +55,8 @@ function ToEasyCopy(imtype,title,msg){
 		return "【**"+title+"**】`"+msg+"`"
 	else if(imtype=="tg")
 		return "【*"+title+"*】`"+msg+"`"
+	// else if(imtype=="qq")
+	// 	return 
 	else
 		return  "【" + title + "】"+msg
 }
