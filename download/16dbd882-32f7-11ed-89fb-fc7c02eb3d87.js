@@ -4,10 +4,10 @@
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
-* @rule raw 登陆|登录
-* @rule raw [\S ]*?pin=[^;]+; ?wskey=[^;]+;[\S ]*
-* @rule raw [\S ]*?pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
-* @priority 1
+* @rule raw ^(登陆|登录)$
+* @rule raw [\S ]*pin=[^;]+; ?wskey=[^;]+;[\S ]*
+* @rule raw [\S ]*pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
+* @priority 999999
  * @public false
 * @disable false
 */
@@ -16,7 +16,7 @@
 const DefaultQL=1
 
 //允许上车的群聊白名单id,非白名单群禁止上车
-const GroupWhiteList=["758657899"]
+const GroupWhiteList=[758657899]
 
 //客户黑名单，黑名单客户禁止上车
 const BlackList=[]
@@ -53,17 +53,21 @@ function main(){
 			 s.recallMessage(s.getMessageId())
 		}
 	
-		s.reply("请输入电话号码：")
+		s.reply("请输入电话号码(输入q退出)：")
 		let inp1=s.listen(handle,WAIT)
 		if(inp1==null){
 			s.reply("输入超时，请重新登陆")
 			return
 		}
-		let Tel=inp1.getContent()
-		if(Tel.length!=11){
+		else if(inp1.getContent()=="q"){
+			s.reply("已退出")
+			return
+		}
+		else if(inp1.getContent().length!=11){
 			s.reply("手机号码错误，请重新登陆")
 			return
 		}
+		let Tel=inp1.getContent()
 		let data=Submit_Nark(nark+"/api/SendSMS",{"Phone": Tel,"qlkey": 0})
 		if(!data.success){
 			s.reply(data.message)
@@ -96,13 +100,13 @@ function main(){
 	}
 	else if(s.getContent().indexOf("wskey")!=-1){
 		s.recallMessage(s.getMessageId())
-		env.name="JD_WSK"
-		env.value=s.getContent().match(/pin=[^;]+; ?wskey=[^;]+;/)
+		env.name="JD_WSCK"
+		env.value=s.getContent().match(/pin=[^;]+; ?wskey=[^;]+;/)[0]
 	}
 	else{
 		s.recallMessage(s.getMessageId())
 		env.name="JD_COOKIE"
-		env.value=s.getContent().match(/pt_key=[^;]+; ?pt_pin=[^;]+;/)
+		env.value=s.getContent().match(/pt_key=[^;]+; ?pt_pin=[^;]+;/)[0]
 	}
 	console.log(JSON.stringify(env))
 
@@ -114,26 +118,33 @@ function main(){
 		return
 	}
 	let result=Submit_JD(QLS[DefaultQL-1].host,ql_token,env)
+	//console.log(typeof(result)+":"+result)
 	if(result){
 		let pin=env.value.match(/(?<=pin=)[^;]+/).toString()
 		let bind=new Bucket("pin"+s.getPlatform().toUpperCase())
 		bind.set(pin,s.getUserId())
 		if(result==1)
-			sillyGirl.notifyMasters(pin+" ("+s.getPlatform()+":"+s.getUserId()+"),已添加账号")
+			sillyGirl.notifyMasters(pin+",已添加账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
 		else if(result==2)
-			sillyGirl.notifyMasters(pin+" ("+s.getPlatform()+":"+s.getUserId()+"),已更新账号")
+			sillyGirl.notifyMasters(pin+",已更新账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
 		s.reply("上车成功")
 	}
 	else{
 		s.reply("提交失败，请联系管理员")
-		s.reply(env.value)
+		if(s.getContent()=="登陆"||s.getContent()=="登录"){
+			sillyGirl.push({
+    			platform: s.getPlatform(),
+    			userId: s.getUserId(),
+    			content: env.value,
+			})
+			s.reply("获取的ck已私聊推送给您，或者您可以尝试将ck发给机器人尝试再次提交")
+		}
 		return
-
 	}
 }
 
 function Submit_Nark(api,body){
-	const TRY_TIMES=3
+	const TRY_TIMES=5
 	let count=0
 	let msg=""
 	while(count<TRY_TIMES){
@@ -153,7 +164,7 @@ function Submit_Nark(api,body){
 		else
 			msg=JSON.stringify(data)
 		count++
-		sleep(1000)
+		sleep(5000)
 	}
 	if(count==TRY_TIMES){
 		return {success:false,message:msg}
@@ -183,7 +194,11 @@ function Submit_JD(host,token,env){
 			id=envs[index].id
 		else
 			id=envs[index]._id
-		if(ql.Update_QL_Env(host,token,id,env.name,env.value,envs[index].remarks))
+		if(envs[index].remarks)
+			remarks=envs[index].remarks
+		else
+			remarks=""
+		if(ql.Update_QL_Env(host,token,id,env.name,env.value,remarks))
 			return 2
 		else
 			return 0

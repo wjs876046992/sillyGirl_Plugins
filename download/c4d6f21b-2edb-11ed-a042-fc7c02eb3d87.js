@@ -6,7 +6,7 @@
 * @platform qq wx tg pgm sxg
 * @rule raw [\s\S]*?[(|)|#|@|$|%|¥|￥|!|！]([0-9a-zA-Z]{10,14})[(|)|#|@|$|%|¥|￥|!|！][\s\S]*
 * @rule raw [\s\S]*?https:\/\/(.{2,}\.isvj(clou)?d\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
-* @rule raw [\s\S]*?https://(prodev\.m|jdjoy)\.jd\.com[\s\S]*
+* @rule raw [\s\S]*?https:\/\/.{2,}\.jd\.com[\s\S]*
 * @rule raw [\s\S]*?export \w+[ ]*=[ ]*"[^"]+"[\s\S]*
 * @rule 恢复ql spy
 * @rule 监控管理
@@ -1864,7 +1864,40 @@ var DefaultUrlDecode =[
 				ori: "activityId",
 				redi: "jd_cjhy_wxKnowledgeActivity_activityId"//环保
 			}]
-		}
+		},
+
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/cart_item",
+			name: "txzj加购有礼",
+			trans: [{
+				ori: "a",
+				redi: "jd_txzj_cart_item_id"
+			}]
+		},
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/collect_item",
+			name: "txzj关注有礼",
+			trans: [{
+				ori: "a",
+				redi: "jd_txzj_collect_item_id"
+			}]
+		},
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/sign_in",
+			name: "txzj签到",
+			trans: [{
+				ori: "a",
+				redi: "jd_txzj_sign_in_id"
+			}]
+		},
+		{
+			keyword: "https://txzj-isv.isvjcloud.com/lottery",
+			name: "txzj抽奖",
+			trans: [{
+				ori: "a",
+				redi: "jd_txzj_lottery_id"
+			}]
+		},
 
 
 

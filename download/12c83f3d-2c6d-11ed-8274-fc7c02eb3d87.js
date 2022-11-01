@@ -19,7 +19,7 @@
 * @rule raw 查找\s\S+
  * @public false
 * @admin true
-* @version v1.8.2
+ * @version v1.0.0
 */
 
 /***********青龙管理******************
@@ -379,6 +379,7 @@ function Recovery_qlEnv(QLS){
 	for(let i=0;i<backup.length;i++){
 		let suss=null//是否成功恢复
 		let addenvs=[]//将要恢复的变量
+		let temp=""
 		if(QLS.length>1)
 			s.reply("\n请选择备份容器【"+backup[i].name+"】的恢复容器\n")
 		let inp=Get_QL(QLS)
@@ -390,6 +391,8 @@ function Recovery_qlEnv(QLS){
 			
 		let envs=ql.Get_QL_Envs(ql_host,ql_token)
 		for(let j=0;j<backup[i].envs.length;j++){
+			if(backup[i].envs[j].name=="JD_COOKIE")
+				temp+=backup[i].envs[j].value+"\n"
 			//if(envs.findIndex(env=>env.name==backup[i].envs[j].name&&(env.valu==backup[i].envs[j].value)))
 			if(EnvExist(envs,backup[i].envs[j])){//跳过已存在变量，防止重复
 				continue
@@ -406,7 +409,8 @@ function Recovery_qlEnv(QLS){
 					notify+="恢复变量:"+backup[i].envs[j].name+"\n"
 			}
 		}
-		console.log(JSON.stringify(addenvs))
+		console.log(JSON.stringify(backup[i].envs))
+//		console.log(JSON.stringify(addenvs))
 //		s.reply(JSON.stringify(addenvs))
 //		addenvs=JSON.parse(JSON.stringify(addenvs))//????
 //		s.reply(JSON.stringify(addenvs))
@@ -518,6 +522,7 @@ function Notify_JDCK_disabled(QLS){
 	let notify=""
 	let record=[]//记录已通知pin，防止多容器存在同一账号时重复通知
 	let toType=(new Bucket("GroupNotify")).keys()
+	let sum=0
 	for(let j=0;j<QLS.length;j++){
 		if(QLS[j].disable)
 			continue
@@ -537,6 +542,7 @@ function Notify_JDCK_disabled(QLS){
 		notify=notify+"\n---------------------\n【"+QLS[j].name+"】\n"
 		for(let i=0;i<envs.length;i++){
 			if(envs[i].name=="JD_COOKIE"&&envs[i].status==1){
+				sum++
 				//console.log(envs[i].value)
 				let pin=envs[i].value.match(/(?<=pt_pin=)[^;]+/)[0]
 				let name=GetName(envs[i].value)//获取通知应该使用的称呼					
@@ -575,7 +581,7 @@ function Notify_JDCK_disabled(QLS){
 	if(!record.length)
 		return "您的客户全都没有失效耶~"
 	else
-		return "共"+record.length+"个账号失效"+notify	
+		return "共"+sum+"个账号失效"+notify	
 }
 
 function Move_qlEnv(QLS,from,to_index){
