@@ -328,7 +328,7 @@ function WallDecode(code) {
 	})
 	try {//console.log(resp)
 		let data = resp.body
-		if (data.code == 200 && data.data != "无法解析该口令")
+		if (data.code == 200 && typeof(data.data) != "string")
 			return data.data
 		else
 			return null
@@ -336,7 +336,6 @@ function WallDecode(code) {
 	catch (err) {
 		return null
 	}
-	return null
 }
 
 //京东口令解析-Windfgg
@@ -363,7 +362,6 @@ function WindfggDecode(code) {
 	catch (err) {
 		return null
 	}
-	return null
 }
 
 //京东口令解析-nolan
@@ -385,7 +383,6 @@ function NolanDecode(code) {
 	catch (err) {
 		return null
 	}
-	return null
 }
 
 

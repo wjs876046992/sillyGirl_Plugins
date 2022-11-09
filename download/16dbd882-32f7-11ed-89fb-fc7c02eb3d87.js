@@ -1,6 +1,6 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.2
+ * @version v1.0.3
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
@@ -9,7 +9,7 @@
 * @rule raw [\S ]*pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
 * @priority 999999
  * @public false
-* @disable false
+* @disable true
 */
 
 //默认上车服务器序号
@@ -45,15 +45,16 @@ function main(){
 		const WAIT=60*1000
 		const nark=(new Bucket("jd_cookie")).get("nolan_addr")
 		if(nark==""){
-			s.reply("未对接登陆，请联系管理员")
+			if(s.isAmdin())
+				s.reply("请使用命令set jd_cookie nolan_addr http://xx.xx.xx.xx 对接nark")
+			else
+				s.reply("未对接登陆，请联系管理员")
 			return
 		}
 
-		var handle=function (s){
-			 s.recallMessage(s.getMessageId())
-		}
+		var handle=function(s){s.recallMessage(s.getMessageId())}
 	
-		s.reply("请输入电话号码(输入q退出)：")
+		s.reply("请输入京东登陆手机号码(输入q退出)：")
 		let inp1=s.listen(handle,WAIT)
 		if(inp1==null){
 			s.reply("输入超时，请重新登陆")
@@ -117,7 +118,7 @@ function main(){
 		s.reply(env.value)
 		return
 	}
-	let result=Submit_JD(QLS[DefaultQL-1].host,ql_token,env)
+	let result=Submit_QL(QLS[DefaultQL-1].host,ql_token,env)
 	//console.log(typeof(result)+":"+result)
 	if(result){
 		let pin=env.value.match(/(?<=pin=)[^;]+/).toString()
@@ -146,7 +147,7 @@ function main(){
 function Submit_Nark(api,body){
 	const TRY_TIMES=5
 	let count=0
-	let msg=""
+	let msg=null
 	while(count<TRY_TIMES){
 		let resp=request({
    			url:api,
@@ -173,7 +174,7 @@ function Submit_Nark(api,body){
 		return {success:true,message:msg}
 }
 
-function Submit_JD(host,token,env){
+function Submit_QL(host,token,env){
 	let pin=env.value.match(/(?<=pin=)[^;]+/)
 	if(pin==null)
 		return false
@@ -183,12 +184,14 @@ function Submit_JD(host,token,env){
 	if(envs==null)
 		return false
 	
-	let index=envs.findIndex(Ele=>Ele.name==env.name&&Ele.value.match(/(?<=pin=)[^;]+/)[0]==pin)
-	if(index==-1)
+	let index=envs.findIndex(Ele => Ele.name == env.name && Ele.value.match(/(?<=pin=)[^;]+/)[0] == pin)
+	if(index==-1){
+		env.remarks=s.getPlatform()+":"+s.getUserId()
 		if(ql.Add_QL_Env(host,token,[env]))
 			return 1
 		else
 			return 0
+	}
 	else{
 		if(envs[index].id)
 			id=envs[index].id
@@ -197,7 +200,7 @@ function Submit_JD(host,token,env){
 		if(envs[index].remarks)
 			remarks=envs[index].remarks
 		else
-			remarks=""
+			remarks=s.getPlatform()+":"+s.getUserId()
 		if(ql.Update_QL_Env(host,token,id,env.name,env.value,remarks))
 			return 2
 		else

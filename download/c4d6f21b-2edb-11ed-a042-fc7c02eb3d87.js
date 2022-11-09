@@ -5,9 +5,9 @@
 * @title 白眼
 * @platform qq wx tg pgm sxg
 * @rule raw [\s\S]*?[(|)|#|@|$|%|¥|￥|!|！]([0-9a-zA-Z]{10,14})[(|)|#|@|$|%|¥|￥|!|！][\s\S]*
-* @rule raw [\s\S]*?https:\/\/(.{2,}\.isvj(clou)?d\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
-* @rule raw [\s\S]*?https:\/\/.{2,}\.jd\.com[\s\S]*
-* @rule raw [\s\S]*?export \w+[ ]*=[ ]*"[^"]+"[\s\S]*
+* @rule raw [\s\S]*https:\/\/(.{2,}\.isvj(clou)?d\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
+* @rule raw [\s\S]*https:\/\/.{2,}\.jd\.com[\s\S]*
+* @rule raw [\s\S]*export \w+[ ]*=[ ]*"[^"]+"[\s\S]*
 * @rule 恢复ql spy
 * @rule 监控管理
 * @rule 导出白眼
@@ -148,7 +148,7 @@ function main() {
 			let values = msg.match(/(?<=export[ ]+\w+[ ]*=[ ]*")[^"]+(?=")/g)
 			let envs = [],urls=[]
 			if(DecodeUrlEnv){
-				const NoDecode=["jd_zdjr_activityUrl","jd_cjhy_activityUrl","jd_wdz_activityUrl"]
+				const NoDecode=["jd_zdjr_activityUrl","jd_cjhy_activityUrl","jd_wdz_activityUrl","jd_wdzfd_activityUrl"]//不解析的链接型变量
 				names.forEach((ele,index)=>{
 					if(ele.match(/URL|Url/)!=null)
 						if(NoDecode.indexOf(ele)==-1)
@@ -1474,7 +1474,7 @@ function Print_SpyUrl(decodes) {
 var DefaultUrlDecode =[
 		/******************KR库********************** */
 		{
-			keyword: /https:\/\/cjhydz-isv.isvjcloud.com\/wxTeam\/activity/,
+			keyword: /https:\/\/cjhydz-isv\.isvjcloud.com\/wxTeam\/activity/,
 			name: "CJ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1483,7 +1483,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxTeam\/activity/,
+			keyword: /https:\/\/lzkjdz-isv\.isvj(clou)?d.com\/wxTeam\/activity/,
 			name: "LZ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1500,6 +1500,14 @@ var DefaultUrlDecode =[
 			}]
 		},
 
+		{
+			keyword: "https://cjhydz-isv.isvjcloud.com/microDz/invite/openLuckBag",
+			name: "CJ微定制福袋",
+			trans: [{
+				ori: "activityId",
+				redi: "jd_wdzfd_activityId"
+			}]
+		},
 	
 		{
 			keyword: "https://lzkjdz-isv.isvjcloud.com/wxCollectCard",
@@ -1779,7 +1787,7 @@ var DefaultUrlDecode =[
 			name: "LZ店铺关注抽奖",
 			trans: [{
 				ori: "activityId",
-				redi: "jd_wxShopFollowActivity_activityId"//kr 环保
+				redi: "jd_wxShopFollowActivity_activityId"
 			}]
 		},
 		{
@@ -1787,10 +1795,19 @@ var DefaultUrlDecode =[
 			name: "LZ店铺关注抽奖",
 			trans: [{
 				ori: "activityId",
-				redi: "jd_wxShopFollowActivity_activityId"//kr 环保
+				redi: "jd_wxShopFollowActivity_activityId"
 			}]
 		},
 
+		{
+			keyword: "https://cjhydz-isv.isvjcloud.com/microDz/invite/openLuckBag",
+			name: "CJ微定制福袋",
+			trans: [{
+				ori: "activityId",
+				redi: "jd_wdz_openLuckBag_activityId"
+			}]
+		},
+	
 		{
 			keyword: "https://lzkj-isv.isvjcloud.com/wxCollectionActivity/activity2",
 			name: "LZ加购有礼",
