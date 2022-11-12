@@ -9,7 +9,7 @@
 * @rule raw [\S ]*pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
 * @priority 999999
  * @public false
-* @disable true
+* @disable false
 */
 
 //默认上车服务器序号
@@ -22,10 +22,10 @@ const GroupWhiteList=[758657899]
 const BlackList=[]
 
 const ql=require("qinglong")
+const s = sender
+const sillyGirl=new SillyGirl()
 
 function main(){
-	const s = sender
-	const sillyGirl=new SillyGirl()
 
 	if(BlackList.indexOf(s.getUserId())!=-1){
 		s.reply("您已被拉黑，请联系管理员")
@@ -118,7 +118,13 @@ function main(){
 		s.reply(env.value)
 		return
 	}
-	let result=Submit_QL(QLS[DefaultQL-1].host,ql_token,env)
+	try{
+		result=Submit_QL(QLS[DefaultQL-1].host,ql_token,env)
+	}
+	catch(err){
+		s.reply("提交失败\n"+err)
+		return
+	}
 	//console.log(typeof(result)+":"+result)
 	if(result){
 		let pin=env.value.match(/(?<=pin=)[^;]+/).toString()
