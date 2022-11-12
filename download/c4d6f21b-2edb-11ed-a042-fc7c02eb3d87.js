@@ -1474,7 +1474,7 @@ function Print_SpyUrl(decodes) {
 var DefaultUrlDecode =[
 		/******************KR库********************** */
 		{
-			keyword: /https:\/\/cjhydz-isv\.isvjcloud.com\/wxTeam\/activity/,
+			keyword: /https:\/\/cjhy(dz)?-isv\.isvjcloud\.com\/wxTeam\/activity/,
 			name: "CJ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1492,7 +1492,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://cjhydz-isv.isvjcloud.com/microDz/invite/activity",
+			keyword: /https:\/\/cjhy(dz)?-isv\.isvjcloud\.com\/microDz\/invite\/activity/,
 			name: "CJ微定制",
 			trans: [{
 				ori: "activityId",
@@ -1501,7 +1501,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://cjhydz-isv.isvjcloud.com/microDz/invite/openLuckBag",
+			keyword: /https:\/\/cjhy(dz)?-isv\.isvjcloud\.com\/microDz\/invite\/openLuckBag/,
 			name: "CJ微定制福袋",
 			trans: [{
 				ori: "activityId",

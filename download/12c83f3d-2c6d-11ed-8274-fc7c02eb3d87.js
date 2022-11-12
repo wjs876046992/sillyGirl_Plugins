@@ -271,7 +271,7 @@ function Bean_Info(QLS,n,m){
 	}
 	let info=[]//各项收入详情[{eventMassage:活动名,amount:获得京豆数量,date:获得时间,...}]
 	let InfoSum=[]//各项收入统计[{eventMassage:活动名,amount:获得京豆数量统计}]	
-	let sum=0//总收入
+	let increase=0,decrease=0//总收入支出
 	let notify="\n-最近收入\n"
 	let latest=3//最近收入项数
 	ql_host=QLS[n-1].host
@@ -296,7 +296,11 @@ function Bean_Info(QLS,n,m){
 			let index=InfoSum.findIndex(function(ele,index,arr){
 				return ele.eventMassage==info[i].eventMassage
 			})
-			sum+=Number(info[i].amount)
+			let temp=Number(info[i].amount)
+			if(temp>0)
+				increase+=temp
+			else
+				decrease+=temp
 			if(latest-->0){//记录最近收入
 				notify+=info[i].amount+" "+info[i].eventMassage+" "+info[i].date.match(/(?<= )\S+/g)+"\n"
 			}
@@ -318,7 +322,7 @@ function Bean_Info(QLS,n,m){
 	// 	name=envs[m-1].remarks
 	// else
 		name=GetName(envs[m-1].value)
-	return "-----【"+name+"】-----\n"+"✧今日收入【"+sum+"】京豆✧\n\n"+notify
+	return "-----【"+name+"】-----\n"+"✧今日收入【"+increase+"】京豆✧\n"+"✧今日支出【"+decrease+"】京豆✧\n--------------------------------\n\n"+notify
 }
 
 function SaveJDUserName(QLS){
@@ -562,6 +566,7 @@ function Notify_JDCK_disabled(QLS){
 						sleep(Math.random()*10000+10000)
 					}
 					else{//群通知
+						let gn=new Bucket("GroupNotify")
 						for(let k=0;k<toType.length;k++){
 							let gid=gn.get(toType[k]).split("&")
 							for(l=0;l<gid.length;l++)

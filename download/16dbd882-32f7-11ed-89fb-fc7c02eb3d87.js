@@ -179,7 +179,7 @@ function Submit_QL(host,token,env){
 	if(pin==null)
 		return false
 	else
-		pin=pin.toString()
+		pin=pin[0]
 	let envs=ql.Get_QL_Envs(host,token)
 	if(envs==null)
 		return false
