@@ -1,6 +1,6 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
- * @version v1.0.3
+ * @version v1.0.4
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
