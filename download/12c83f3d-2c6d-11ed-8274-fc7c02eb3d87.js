@@ -19,7 +19,7 @@
 * @rule raw 查找\s\S+
  * @public false
 * @admin true
- * @version v1.0.0
+* @version v1.8.2
 */
 
 /***********青龙管理******************
