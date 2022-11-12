@@ -9,7 +9,7 @@
 * @rule raw [\S ]*pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
 * @priority 999999
  * @public false
-* @disable false
+* @disable true
 */
 
 //默认上车服务器序号
