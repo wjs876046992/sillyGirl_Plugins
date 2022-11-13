@@ -372,9 +372,9 @@ function NolanDecode(code) {
 		body: { "code": code }
 	})
 	try {
-		console.log(resp.body)
-		data=resp.body
-		//let data = JSON.parse(resp.body)
+		//console.log(resp.body)
+		//data=resp.body
+		let data = JSON.parse(resp.body)
 		if (data.code == 0)
 			return data.data
 		else
