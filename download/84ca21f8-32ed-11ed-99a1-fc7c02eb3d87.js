@@ -3,7 +3,7 @@
 * @module true
 * @create_at 2022-09-09 16:30:33
 * @description 一些通用函数和网络接口以及数据
-* @version v1.0.0
+* @version v1.0.1
 * @title something
  * @public false
 */
@@ -369,12 +369,12 @@ function NolanDecode(code) {
 	let resp = request({
 		url: "https://api.nolanstore.top/JComExchange",
 		method: "post",
-		body: { "code": code },
-		json: true
+		body: { "code": code }
 	})
 	try {
-		//		s.reply(resp)
-		let data = JSON.parse(resp.body)
+		console.log(resp.body)
+		data=resp.body
+		//let data = JSON.parse(resp.body)
 		if (data.code == 0)
 			return data.data
 		else
