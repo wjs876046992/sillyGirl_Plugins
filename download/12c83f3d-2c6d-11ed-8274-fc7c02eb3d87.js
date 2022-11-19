@@ -322,7 +322,7 @@ function Bean_Info(QLS,n,m){
 	// 	name=envs[m-1].remarks
 	// else
 		name=GetName(envs[m-1].value)
-	return "-----【"+name+"】-----\n"+"✧今日收入【"+increase+"】京豆✧\n"+"✧今日支出【"+decrease+"】京豆✧\n--------------------------------\n\n"+notify
+	return "-----【"+name+"】-----\n"+"★今日收入："+increase+"\n"+"☆今日支出："+Math.abs(decrease)+"\n--------------------------------\n\n"+notify
 }
 
 function SaveJDUserName(QLS){
