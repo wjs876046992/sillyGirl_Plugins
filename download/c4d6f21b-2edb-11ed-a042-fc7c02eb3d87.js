@@ -294,7 +294,7 @@ function Spy_Manager() {
 		else if (inp == "a") {
 			if (silent != "true"){
 				silent = "true"
-				s.reply("已开启静默")
+				s.reply("已开启静默!\n若需获取监控情况，可使用命令\n\set SpyNotify tg(或qq、wx) id\n或者\nset SpyGroupNotify tg(或qq、wx) 群id\n设置推送渠道")
 			}
 			else{
 				silent = "false"
@@ -1003,10 +1003,7 @@ function Que_Manager(QLS) {
 			break
 		}
 
-		//检查是否已完成所有任务，是则开锁并停止循环退出
 		let Listens = JSON.parse(db.get("env_listens_new"))
-		
-
 		for (i = 0; i < QLS.length; i++) {
 			QLS[i]["envs"] = []	//容器配置文件需要修改的变量
 			QLS[i]["keywords"] = []	//容器需要执行的任务的关键词
@@ -1231,14 +1228,13 @@ function Add_Spy(oldspy, newspy) {
 
 
 //发送msg消息
-function Notify(msg) {//s.reply("通知")
+function Notify(msg) {
 	let imType = s.getPlatform()
-	let message = s.getContent();//s.reply(message)
-	if (db.get("spy_silent_new") != "true" || s.isAdmin()) {//s.reply(msg)
+	let message = s.getContent();
+	if (db.get("spy_silent_new") != "true" || s.isAdmin()) {
 		if (imType != "tg")
 			s.reply(msg)
 		else {
-			//msg = msg.replace(/(?<!\\)_/g,"\\_")
 			if (s.getChatId() != 0){
 				if(!st.SendToTG(s.getChatId(), msg))
 					s.reply(msg)
@@ -1251,13 +1247,13 @@ function Notify(msg) {//s.reply("通知")
 	}
 	else {//静默
 		let from = "处理来自" + s.getPlatform() + ":"
-		if (s.getChatId() != 0) {
+		if (s.getChatId()) {
 			/*			if(s.getChatname()!="")
 							from+="群("+s.getChatname()+")"
 						else*/
 			from += "群(" + s.getChatId() + ")"
 		}
-		if (s.getUsername() != "")
+		if (s.getUsername())
 			from += "「" + s.getUsername() + "」"
 		else
 			from += "「" + s.getUserId() + "」"
