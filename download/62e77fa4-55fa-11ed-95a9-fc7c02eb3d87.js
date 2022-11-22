@@ -5,41 +5,37 @@
 * @description 获取京东短链真实链接,直接发送短链即可
 * @title 京东短链转长链
 * @platform qq wx tg pgm sxg
-* @rule raw https://u\.jd\.com/\w+
+* @rule raw [\s\S]*https://u\.jd\.com/\w+[\s\S]*
 * @admin true
  * @public false
 * @priority 9
 */
 
 const s = sender
-const st=require("something")
 
 function main(){
-    let data= request(s.getContent())
-    
-    let url=data.body.match(/(?<=hrl=')https:\/\/u\.jd\.com[^']+/)
-    if(url){
-        url=url[0]
-        data=request({
-            url:url,
-            method:"get",
-            allowredirects: false, 
-        })
-        if(data.status==302){
-            let imType=s.getPlatform()
-            if(imType=="pgm")
-                s.reply(st.ToEasyCopy(imType,"原始链接",data.headers["Location"]))
-            else if(imType=="tg"){
-                let msg=st.ToEasyCopy(imType,"原始链接",data.headers["Location"])
-                if(s.getChatId())
-                    st.SendToTG(s.getChatId(),msg)
-                else
-                    st.SendToTG(s.getUserId(),msg)
+    let notify=s.getContent()
+    let urls=s.getContent().match(/https:\/\/u\.jd\.com\/\w+/g)
+    if(!urls)
+        s.reply("something wrong!")
+    for(let i=0;i<urls.length;i++){
+        let data= request(urls[i])
+        let url=data.body.match(/(?<=hrl=')https:\/\/u\.jd\.com[^']+/)
+        if(url){
+            url=url[0]
+            data=request({
+                url:url,
+                method:"get",
+                allowredirects: false, 
+            })
+            if(data.status==302){
+                notify=notify.replace(urls[i],data.headers["Location"])
+                //console.log(urls[i]+"\n\n"+data.headers["Location"])
             }
-            else
-                s.reply("原始链接：\n"+data.headers["Location"])
         }
+        sleep(100)
     }
+    s.reply(notify)
     s.continue()
     return
 }

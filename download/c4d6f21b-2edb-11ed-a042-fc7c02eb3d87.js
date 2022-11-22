@@ -389,11 +389,11 @@ function Spy_Manager() {
 						}]
 					}
 					try{
-						s.reply("请输入您想解析链接的关键词(例如：http://xxx.com/yyyy/zzzz/ )")
+						s.reply("请输入您想解析链接的关键词(一般为截取链接最前面一段,例如：http://xxx.com/yyyy/zzzz/ )")
 						decode.keyword = s.listen(WAIT).getContent()
-						s.reply("请输入您想提取的参数（例如:http://...../?actid=xxx 中的actid,若使用整段链接作为变量请输入-1)")
+						s.reply("请输入您想提取的该类型链接中的参数名（例如:http://...../?actid=xxx 中的actid,若使用整段链接作为变量请输入-1)")
 						decode.trans[0].ori = s.listen(WAIT).getContent()
-						s.reply("请输入您想使用该参数的变量名：")
+						s.reply("请输入使用该参数值作为变量值的变量名：")
 						decode.trans[0].redi = s.listen(WAIT).getContent()
 						s.reply("请输入该解析任务的备注名称：")
 						decode.name = s.listen(WAIT).getContent()
@@ -1445,7 +1445,7 @@ function Print_SpyTran(trans) {
 
 //打印监控菜单-链接解析页面
 function Print_SpyUrl(decodes) {
-	let notify = "请选择添加添加或者删除链接规则：\n(-数字删除，0添加,u返回)\n"
+	let notify = "请选择添加或者删除链接解析规则：\n(-数字删除，0添加,u返回)\n"
 	for (let i = 0; i < decodes.length; i++) {
 		notify += (i + 1) + "、" + decodes[i].name + "(" + decodes[i].keyword + "):\n"
 		for (let j = 0; j < decodes[i].trans.length; j++)
@@ -1531,7 +1531,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxSecond/,
+			keyword: /https:\/\/lzkj(dz)?-isv.isvj(clou)?d.com\/wxSecond/,
 			name: "LZ读秒拼手速",
 			trans: [{
 				ori: "activityId",
