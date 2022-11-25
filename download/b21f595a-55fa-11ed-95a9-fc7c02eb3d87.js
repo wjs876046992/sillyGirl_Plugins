@@ -105,7 +105,11 @@ function main(){
             }
         }
         if(!find){
-            if(ql.Add_QL_Env(Host,token,EnvName,ck,s.getPlatform()+":"+s.getUserId())){
+            if(ql.Add_QL_Env(Host,token,[{
+                    name:EnvName,
+                    value:ck,
+                    remarks:s.getPlatform()+":"+s.getUserId()
+                }])){
                 db.set(uid,s.getUserId())
                 s.reply("添加成功")
                 return
