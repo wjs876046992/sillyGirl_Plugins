@@ -32,7 +32,7 @@ const db=new Bucket("elm_bind")
 
 function main(){
     if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
-        console.log("非白名单群聊，禁止提交")
+        console.log("非白名单群聊，禁止使用")
         return
     }
 
@@ -72,7 +72,6 @@ function main(){
                     else{
                         s.reply("查询失败")
                     }
-                    break
                 }
             }
         }
@@ -130,20 +129,24 @@ function Get_ElmBeans(ck){
     })
 	try{
         let info=JSON.parse(resp.body)
-        let count=0
+        let increment=0,decrement=0
 		let day0=null
 		for(let i=0;i<info.records.length;i++){
 			let day=info.records[i].createdTime.match(/(?<=-)\d{1,2}(?= )/)[0]
 			if(!day0)
 				day0=day
-			if(day == day0)
-				count+=info.records[i].count
+			if(day == day0){
+                if(info.records[i].bizType=="USE")
+                    decrement+=info.records[i].count
+                else
+				    increment+=info.records[i].count
+            }
 			else
 				break
 		}
     	return {
                 	amount:info.peaCount,
-                	increment:count
+                	increment:increment
         		}
 	}
 	catch(err){
