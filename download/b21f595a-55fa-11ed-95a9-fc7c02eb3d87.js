@@ -20,7 +20,7 @@ const CilentSecrect="Fj6Po7bF7N7eVAcBknx1x2-S"
 //饿了么变量名
 const EnvName="elmCookie"
 
-//允许提交变量的群聊白名单
+//允许使用本插件的群聊白名单
 const GroupWhiteList=[]
 /****************************** */
 
@@ -31,6 +31,11 @@ const ql=require("qinglong")
 const db=new Bucket("elm_bind")
 
 function main(){
+    if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
+        console.log("非白名单群聊，禁止提交")
+        return
+    }
+
     let token=ql.Get_QL_Token(Host,CilentID,CilentSecrect)
     if(!token){
         s.reply("token获取失败")
@@ -75,10 +80,6 @@ function main(){
             s.reply("未绑定饿了么账号")
     }
     else{
-        if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
-            console.log("非白名单群聊，禁止提交")
-            return
-        }
 
         let ck=s.param(1)
         if(ck.indexOf("SID")==-1 || ck.indexOf("cookie2")==-1 || ck.indexOf("USERID")==-1){
