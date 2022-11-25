@@ -1782,6 +1782,14 @@ var DefaultUrlDecode =[
 				redi: "jd_lzkj_loreal_invite_url"//kr
 			}]
 		},
+		{
+			keyword: /https:\/\/shop\.m\.jd.com\/shop\/lottery/,
+			name: "店铺刮刮乐",
+			trans: [{
+				ori: "-1",
+				redi: "jd_shopDraw_activityUrl"//kr
+			}]
+		},
 
 
 	
@@ -1973,22 +1981,6 @@ var DefaultUrlDecode =[
 			trans: [{
 				ori: "activityId",
 				redi: "jd_lzkj_wxBuildActivity_activityId"
-			}]
-		},
-		{
-			keyword: /lzkj-isv\.isvj(clou)?d.com\/wxShopFollowActivity/,
-			name: "lzkj关注店铺有礼",
-			trans: [{
-				ori: "activityId",
-				redi: "jd_lzkj_wxShopFollowActivity_activityId"
-			}]
-		},
-		{
-			keyword: /cjhy-isv\.isvjcloud.com\/wxShopFollowActivity/,
-			name: "cjhy关注店铺有礼",
-			trans: [{
-				ori: "activityId",
-				redi: "jd_cjhy_wxShopFollowActivity_activityId"
 			}]
 		},
 		{
