@@ -67,6 +67,7 @@ function main(){
                         let msg="账号："+user_info.username
                         msg+="\n吃货豆总数："+bean_info.amount
                         msg+="\n今日收入："+bean_info.increment
+                        msg+="\n今日使用/过期："+bean_info.decrement
                         s.reply(msg)
                     }
                     else{
@@ -136,7 +137,7 @@ function Get_ElmBeans(ck){
 			if(!day0)
 				day0=day
 			if(day == day0){
-                if(info.records[i].bizType=="USE")
+                if(info.records[i].bizType=="USE" || info.records[i].bizType=="OVERDUE")
                     decrement+=info.records[i].count
                 else
 				    increment+=info.records[i].count
@@ -146,7 +147,8 @@ function Get_ElmBeans(ck){
 		}
     	return {
                 	amount:info.peaCount,
-                	increment:increment
+                	increment:increment,
+                    decrement:decrement
         		}
 	}
 	catch(err){
