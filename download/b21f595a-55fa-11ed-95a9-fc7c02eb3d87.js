@@ -1,6 +1,6 @@
 /*
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.0
+* @version v1.0.1
 * @create_at 2022-09-08 15:06:22
 * @description 饿了么提交与查询
 * @title 饿了么
@@ -31,7 +31,7 @@ const ql=require("qinglong")
 const db=new Bucket("elm_bind")
 
 function main(){
-    if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
+    if(!s.isAdmin() && s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
         console.log("非白名单群聊，禁止使用")
         return
     }
@@ -59,10 +59,10 @@ function main(){
         for(let i=0;i<envs.length;i++){
             if(envs[i].name==EnvName){
                 let eid=envs[i].value.match(/(?<=USERID=)\d+/)
-                if(eid && eid==uid){
+                if(eid && eid[0]==uid){
                     find=true
-                    let bean_info=Get_ElmBeans(envs[i].value)
-                    let user_info=Get_ElmUserInfo(envs[i].value)
+                    let bean_info=ElmBeans(envs[i].value)
+                    let user_info=ElmUserInfo(envs[i].value)
                     if(bean_info && user_info){
                         let msg="账号："+user_info.username
                         msg+="\n吃货豆总数："+bean_info.amount
@@ -120,7 +120,7 @@ function main(){
     }
 }
 
-function Get_ElmBeans(ck){
+function ElmBeans(ck){
     let resp=request({
         url:"https://h5.ele.me/restapi/svip_biz/v1/supervip/foodie/records?offset=0&limit=100",
 		method:"get",
@@ -131,7 +131,7 @@ function Get_ElmBeans(ck){
 	try{
         let info=JSON.parse(resp.body)
         let increment=0,decrement=0
-		let day0=null
+		let day0=(new Date()).getDate()
 		for(let i=0;i<info.records.length;i++){
 			let day=info.records[i].createdTime.match(/(?<=-)\d{1,2}(?= )/)[0]
 			if(!day0)
@@ -155,7 +155,7 @@ function Get_ElmBeans(ck){
 		return null
 	}
 }
-function Get_ElmUserInfo(ck){
+function ElmUserInfo(ck){
     let resp=request({
         url:"https://restapi.ele.me/eus/v4/user_mini",
 		method:"get",
