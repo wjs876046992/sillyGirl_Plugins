@@ -135,7 +135,11 @@ function main(){
 }
 
 function UpdateBind(uid){
-    let binds=JSON.parse(db.get(uid))
+    let data=db.get(uid)
+    if(data)
+        binds=JSON.parse(data)
+    else
+        binds=[]
     if(typeof(binds) == "number"){//历史遗留问题，绑定关系数据存储转换
         binds=[{imtype:s.getPlatform(),id:binds}]
     }

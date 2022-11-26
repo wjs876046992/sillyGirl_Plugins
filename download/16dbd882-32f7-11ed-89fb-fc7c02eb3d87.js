@@ -28,7 +28,7 @@ const sillyGirl=new SillyGirl()
 function main(){
 
 	if(BlackList.indexOf(s.getUserId())!=-1){
-		s.reply("您已被拉黑，请联系管理员")
+		s.reply("禁止上车，请联系管理员")
 		return
 	}
 	else if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
