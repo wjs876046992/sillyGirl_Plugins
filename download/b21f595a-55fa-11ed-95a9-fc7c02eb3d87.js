@@ -1,6 +1,6 @@
 /*
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.2
+* @version v1.0.3
 * @create_at 2022-09-08 15:06:22
 * @description 饿了么提交与查询,需安装qinglong模块
 * @title 饿了么

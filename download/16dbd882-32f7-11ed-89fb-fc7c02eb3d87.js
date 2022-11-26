@@ -15,10 +15,10 @@
 //默认上车青龙容器序号
 const DefaultQL=1
 
-//允许上车的群聊白名单id,非白名单群禁止上车
+//允许上车的群聊白名单id,非白名单群禁止上车,例:[1232321,-1002312313,12312312]
 const GroupWhiteList=[758657899]
 
-//客户黑名单，黑名单客户禁止上车
+//客户黑名单，黑名单客户禁止上车，例:["123213","1434234"]
 const BlackList=[]
 
 const ql=require("qinglong")
@@ -27,6 +27,7 @@ const sillyGirl=new SillyGirl()
 
 function main(){
 
+	console.log(s.getChatId())
 	if(BlackList.indexOf(s.getUserId())!=-1){
 		s.reply("禁止上车，请联系管理员")
 		return
@@ -92,7 +93,8 @@ function main(){
 
 		const VerifyTimes=3
 		for(let i=0;i<VerifyTimes;i++){
-			s.reply("请输入验证码：")
+			if(inp)
+				s.reply("请输入验证码：")
 			inp=s.listen(handle,WAIT)
 			if(inp==null){
 				continue
@@ -164,6 +166,8 @@ function main(){
 			}
 			sleep(3000)
 		}
+		if(!env.value)
+			return
 	}
 	else if(s.getContent().indexOf("wskey")!=-1){
 		s.recallMessage(s.getMessageId())
