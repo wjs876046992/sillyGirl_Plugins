@@ -161,12 +161,13 @@ function main() {
 			}
 		}
 		//链接监控
-		else if (msg.indexOf("http") != -1) {
+		else if (msg.match(/.isvj(clou)?d/) ) {
 			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*/g)
 			Urls_Decode(urls)
 		}
 		//口令监控
 		else if (msg.match(/[(|)|#|@|$|%|¥|￥|!|！][0-9a-zA-Z]{10,14}[(|)|#|@|$|%|¥|￥|!|！]/g) != null) {
+			//console.log("口令")
 			JDCODE_Decode(msg)
 		}
 		s.continue()

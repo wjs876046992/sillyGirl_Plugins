@@ -1,6 +1,6 @@
 /*
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.1
+* @version v1.0.2
 * @create_at 2022-09-08 15:06:22
 * @description 饿了么提交与查询,需安装qinglong模块
 * @title 饿了么
@@ -30,7 +30,7 @@ const GroupWhiteList=[]
 /***********绑定关系******************* 
 elm_bind 饿了么ID [{imtype:qq/wx/tg,id:id}]
 
-/************************************ */
+**************************************/
 
 const s = sender
 const ql=require("qinglong")
@@ -98,6 +98,8 @@ function main(){
             s.reply("ck有误或者不完整")
             return
         }
+        s.recallMessage(s.getMessageId())
+
         let e_uid=ck.match(/(?<=USERID=)\d+/)[0]
         let find=false
         for(let i=0;i<envs.length;i++){

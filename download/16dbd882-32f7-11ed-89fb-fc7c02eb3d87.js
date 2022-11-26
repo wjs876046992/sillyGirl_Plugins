@@ -1,14 +1,14 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
- * @version v1.0.4
+* @version v1.0.4
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
 * @rule raw ^(登陆|登录)$
 * @rule raw [\S ]*pin=[^;]+; ?wskey=[^;]+;[\S ]*
 * @rule raw [\S ]*pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
-* @priority 999999
- * @public false
+* @priority 99999999999999999999
+* @public false
 * @disable false
 */
 
@@ -44,6 +44,7 @@ function main(){
 	if(s.getContent()=="登陆"||s.getContent()=="登录"){
 		const WAIT=60*1000
 		const nark=(new Bucket("jd_cookie")).get("nolan_addr")
+		env.name="JD_COOKIE"
 		if(nark==""){
 			if(s.isAmdin())
 				s.reply("请使用命令set jd_cookie nolan_addr http://xx.xx.xx.xx 对接nark")
@@ -55,49 +56,107 @@ function main(){
 		var handle=function(s){s.recallMessage(s.getMessageId())}
 	
 		s.reply("请输入京东登陆手机号码(输入q退出)：")
-		let inp1=s.listen(handle,WAIT)
-		if(inp1==null){
+		let inp=s.listen(handle,WAIT)
+		if(inp==null){
 			s.reply("输入超时，请重新登陆")
 			return
 		}
-		else if(inp1.getContent()=="q"){
+		else if(inp.getContent()=="q"){
 			s.reply("已退出")
 			return
 		}
-		else if(inp1.getContent().length!=11){
+		else if(inp.getContent().length!=11){
 			s.reply("手机号码错误，请重新登陆")
 			return
 		}
-		let Tel=inp1.getContent()
-		let data=Submit_Nark(nark+"/api/SendSMS",{"Phone": Tel,"qlkey": 0})
-		if(!data.success){
-			s.reply(data.message)
+		let Tel=inp.getContent()
+		let resp=request({
+   			url:nark+"/api/SendSMS",
+    		method:"post",
+			body:{"Phone": Tel,"qlkey": 0}
+		})
+		try{
+			let data=JSON.parse(resp.body)
+			if(!data.success)
+				throw("unsuccess")
+		}
+		catch(err){
+			console.log(JSON.stringify(resp))
+			s.reply("登陆暂时不可用,已自动为您通知管理员")
+			sillyGirl.notifyMasters("报告管理员，客户登陆失败，nark疑似寄了")
 			return
 		}
-		
+
+
 		s.reply("请输入验证码：")
-		let inp2=s.listen(handle,WAIT)
-		if(inp2==null){
-			s.reply("输入超时，请重新登陆")
-			return null
-		}
-		if(inp2.getContent().length!=6){
-			s.reply("验证码错误，请重新登陆")
-			return
-		}
-		data=Submit_Nark(nark+"/api/VerifyCode",{
+		const VerifyTimes=3
+		for(let i=0;i<VerifyTimes;i++){
+			inp=s.listen(handle,WAIT)
+			if(inp==null){
+				s.reply("输入超时，请重新登陆")
+				return null
+			}
+			if(inp.getContent().length!=6){
+				s.reply("验证码错误，请重新输入")
+				continue
+			}
+			resp=request({
+   				url:nark+"/api/VerifyCode",
+    			method:"post",
+				body:{
  					"Phone": Tel,
  					"QQ": "",
  					"qlkey": 0,
-  					"Code": inp2.getContent()
-				})
-		if(!data.success){
-			console.log(data)
-			s.reply(data.message)
-			return
+  					"Code": inp.getContent()
+				}
+			})
+			try{
+				let data=JSON.parse(resp.body)
+				if(!data.success){
+					if(data.data.status==555 && data.data.mode=="USER_ID"){
+						const VerifyTimes2=3
+						s.reply("您的账号需验证身份,请输入你的身份证前2位与后4位")
+						for(j=0;j<VerifyTimes2;j++){
+							inp=s.listen(handle,WAIT)
+							resp=request({
+   								url:nark+"/api/VerifyCardCode",
+    							method:"post",
+								body:{
+  									"Phone": Tel,
+  									"QQ": "",
+  									"qlkey": 0,
+  									"Code": inp.getContent()
+								}
+							})
+							let data3=JSON.parse(resp.body)
+							if(data3.success){
+								env.value=data3.data.ck
+								break
+							}
+							else{
+								s.reply("输入错误，请重新输入")
+							}
+						}
+					}
+					else if(data.data.status==555 && data.data.mode=="HISTORY_DEVICE"){
+						s.reply("您的账号需验证设备，请联系管理员")
+						sillyGirl.notifyMasters(s.platform()+":"+s.getUserId()+"\n登陆失败，需进行设备验证，请联系开发者")
+					}
+					else if(data.message){
+						s.reply(data.message)
+					}
+				}
+				else{
+					env.value=data.data.ck
+				}
+				if(env.value)
+					break
+			}
+			catch(err){
+				s.reply("未知错误,请联系管理员："+err)
+			}
+			sleep(3000)
 		}
-		env.name="JD_COOKIE"
-		env.value=data.message
 	}
 	else if(s.getContent().indexOf("wskey")!=-1){
 		s.recallMessage(s.getMessageId())
@@ -118,14 +177,8 @@ function main(){
 		s.reply(env.value)
 		return
 	}
-	try{
-		result=Submit_QL(QLS[DefaultQL-1].host,ql_token,env)
-	}
-	catch(err){
-		s.reply("提交失败\n"+err)
-		return
-	}
-	//console.log(typeof(result)+":"+result)
+	
+	result=Submit_QL(QLS[DefaultQL-1].host,ql_token,env)
 	if(result){
 		let pin=env.value.match(/(?<=pin=)[^;]+/).toString()
 		let bind=new Bucket("pin"+s.getPlatform().toUpperCase())
@@ -144,41 +197,12 @@ function main(){
     			userId: s.getUserId(),
     			content: env.value,
 			})
-			s.reply("获取的ck已私聊推送给您，或者您可以尝试将ck发给机器人尝试再次提交")
+			s.reply("获取的ck已私聊推送给您，或者您可以稍后将ck发给机器人尝试再次提交")
 		}
 		return
 	}
 }
 
-function Submit_Nark(api,body){
-	const TRY_TIMES=5
-	let count=0
-	let msg=null
-	while(count<TRY_TIMES){
-		let resp=request({
-   			url:api,
-    		method:"post",
-			body:body
-		})
-		let data=JSON.parse(resp.body)
-		if(data.success){
-			if(data.data.ck)
-				msg=data.data.ck
-			break
-		}
-		else if(data.message)
-			msg=data.message
-		else
-			msg=JSON.stringify(data)
-		count++
-		sleep(5000)
-	}
-	if(count==TRY_TIMES){
-		return {success:false,message:msg}
-	}
-	else
-		return {success:true,message:msg}
-}
 
 function Submit_QL(host,token,env){
 	let pin=env.value.match(/(?<=pin=)[^;]+/)
