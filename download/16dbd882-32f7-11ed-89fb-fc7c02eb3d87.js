@@ -1,6 +1,6 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.4
+* @version v1.0.5
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
 * @title nark登陆
@@ -8,7 +8,7 @@
 * @rule raw [\S ]*pin=[^;]+; ?wskey=[^;]+;[\S ]*
 * @rule raw [\S ]*pt_key=[^;]+; ?pt_pin=[^;]+;[\S ]*
 * @priority 99999999999999999999
-* @public false
+ * @public false
 * @disable false
 */
 
@@ -69,12 +69,14 @@ function main(){
 			s.reply("手机号码错误，请重新登陆")
 			return
 		}
+		let tipid=s.reply("请稍候...")
 		let Tel=inp.getContent()
 		let resp=request({
    			url:nark+"/api/SendSMS",
     		method:"post",
 			body:{"Phone": Tel,"qlkey": 0}
 		})
+		s.recallMessage(tipid)
 		try{
 			let data=JSON.parse(resp.body)
 			if(!data.success)
@@ -88,13 +90,12 @@ function main(){
 		}
 
 
-		s.reply("请输入验证码：")
 		const VerifyTimes=3
 		for(let i=0;i<VerifyTimes;i++){
+			s.reply("请输入验证码：")
 			inp=s.listen(handle,WAIT)
 			if(inp==null){
-				s.reply("输入超时，请重新登陆")
-				return null
+				continue
 			}
 			if(inp.getContent().length!=6){
 				s.reply("验证码错误，请重新输入")
@@ -114,10 +115,11 @@ function main(){
 				let data=JSON.parse(resp.body)
 				if(!data.success){
 					if(data.data.status==555 && data.data.mode=="USER_ID"){
-						const VerifyTimes2=3
 						s.reply("您的账号需验证身份,请输入你的身份证前2位与后4位")
-						for(j=0;j<VerifyTimes2;j++){
+						for(j=0;j<VerifyTimes;j++){
 							inp=s.listen(handle,WAIT)
+							if(inp == null)
+								continue
 							resp=request({
    								url:nark+"/api/VerifyCardCode",
     							method:"post",
@@ -133,8 +135,13 @@ function main(){
 								env.value=data3.data.ck
 								break
 							}
+							else if(data3.message){
+								s.reply(data3.message+"，请重新输入")
+							}
 							else{
-								s.reply("输入错误，请重新输入")
+								s.reply("未知情况，请联系管理员")
+								console.log(JSON.stringify(resp))
+								break
 							}
 						}
 					}
@@ -143,7 +150,7 @@ function main(){
 						sillyGirl.notifyMasters(s.platform()+":"+s.getUserId()+"\n登陆失败，需进行设备验证，请联系开发者")
 					}
 					else if(data.message){
-						s.reply(data.message)
+						s.reply(data.message+",请重新输入")
 					}
 				}
 				else{
