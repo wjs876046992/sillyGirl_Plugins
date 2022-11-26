@@ -2,7 +2,7 @@
 * @author https://t.me/sillyGirl_Plugin
 * @version v1.0.1
 * @create_at 2022-09-08 15:06:22
-* @description 饿了么提交与查询
+* @description 饿了么提交与查询,需安装qinglong模块
 * @title 饿了么
 * @rule elm ?
 * @rule 饿了么
@@ -26,6 +26,12 @@ const GroupWhiteList=[]
 
 
 
+
+/***********绑定关系******************* 
+elm_bind 饿了么ID [{imtype:qq/wx/tg,id:id}]
+
+/************************************ */
+
 const s = sender
 const ql=require("qinglong")
 const db=new Bucket("elm_bind")
@@ -48,18 +54,25 @@ function main(){
     }
 
     if(s.getContent()=="饿了么"){
-        let uid=function (){
-            let ids=db.keys()
-            for(let i=0;i<ids.length;i++){
-                if(db.get(ids[i])==s.getUserId())
-                    return ids[i]
-            }
-        }()
-        let find=false
+        let elm_ids=db.keys()
+        let eids=[]
+        elm_ids.forEach(value=>{
+                let binds=JSON.parse(db.get(value))
+                if(typeof(binds) == "number"){//历史遗留问题，绑定关系数据存储转换
+                    binds=[{imtype:s.getPlatform(),id:binds}]
+                    db.set(value,JSON.stringify(binds))
+                }
+                if(binds.some(bind=>bind.imtype==s.getPlatform() && bind.id==s.getUserId()))
+                    eids.push(value)  
+            })
+        if(!eids.length){
+            s.reply("未绑定饿了么账号")
+            return
+        }
         for(let i=0;i<envs.length;i++){
             if(envs[i].name==EnvName){
                 let eid=envs[i].value.match(/(?<=USERID=)\d+/)
-                if(eid && eid[0]==uid){
+                if(eid && eids.indexOf(eid[0])!=-1){
                     find=true
                     let bean_info=ElmBeans(envs[i].value)
                     let user_info=ElmUserInfo(envs[i].value)
@@ -77,28 +90,27 @@ function main(){
             }
         }
         if(!find)
-            s.reply("未绑定饿了么账号")
+            s.reply("请重新提交饿了么ck")
     }
     else{
-
         let ck=s.param(1)
         if(ck.indexOf("SID")==-1 || ck.indexOf("cookie2")==-1 || ck.indexOf("USERID")==-1){
             s.reply("ck有误或者不完整")
             return
         }
-        let uid=ck.match(/(?<=USERID=)\d+/)[0]
+        let e_uid=ck.match(/(?<=USERID=)\d+/)[0]
         let find=false
         for(let i=0;i<envs.length;i++){
             if(envs[i].name==EnvName){
                 let eid=envs[i].value.match(/(?<=USERID=)\d+/)
-                if(eid && eid[0]==uid){
+                if(eid && eid[0]==e_uid){
                     find=true
                     if(envs[i].id)
                         env_id=envs[i].id
                     else
                         env_id=envs[i]._id
                     if(ql.Update_QL_Env(Host,token,env_id,envs[i].name,ck,envs[i].remarks)){
-                        db.set(uid,s.getUserId())
+                        UpdateBind(e_uid)
                         s.reply("更新成功")
                         return
                     }
@@ -111,13 +123,24 @@ function main(){
                     value:ck,
                     remarks:s.getPlatform()+":"+s.getUserId()
                 }])){
-                db.set(uid,s.getUserId())
+                UpdateBind(e_uid)
                 s.reply("添加成功")
                 return
             }
         }
         s.reply("提交失败")
     }
+}
+
+function UpdateBind(uid){
+    let binds=JSON.parse(db.get(uid))
+    if(typeof(binds) == "number"){//历史遗留问题，绑定关系数据存储转换
+        binds=[{imtype:s.getPlatform(),id:binds}]
+    }
+    if(!binds.some(bind=>bind.imtype==s.getPlatform() && bind.id==s.getUserId())){
+        binds.push({imtype:s.getPlatform(),id:s.getUserId()})
+        db.set(uid,JSON.stringify(binds))
+    }    
 }
 
 function ElmBeans(ck){
