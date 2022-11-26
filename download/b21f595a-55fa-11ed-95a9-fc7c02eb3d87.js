@@ -69,6 +69,7 @@ function main(){
             s.reply("未绑定饿了么账号")
             return
         }
+        let find=false
         for(let i=0;i<envs.length;i++){
             if(envs[i].name==EnvName){
                 let eid=envs[i].value.match(/(?<=USERID=)\d+/)
