@@ -32,7 +32,7 @@ elm_bind 饿了么ID [{imtype:qq/wx/tg,id:id}]
 
 **************************************/
 
-const s = sender
+const s = sender 
 const ql=require("qinglong")
 const db=new Bucket("elm_bind")
 
@@ -162,6 +162,7 @@ function ElmBeans(ck){
         let info=JSON.parse(resp.body)
         let increment=0,decrement=0
 		let day0=(new Date()).getDate()
+        console.log(day0)
 		for(let i=0;i<info.records.length;i++){
 			let day=info.records[i].createdTime.match(/(?<=-)\d{1,2}(?= )/)[0]
 			if(!day0)

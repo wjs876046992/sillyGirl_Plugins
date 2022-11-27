@@ -80,13 +80,14 @@ function main(){
 		s.recallMessage(tipid)
 		try{
 			let data=JSON.parse(resp.body)
-			if(!data.success)
-				throw("unsuccess")
+			if(!data.success && data.message){
+				s.reply(data.message)
+				return
+			}
 		}
 		catch(err){
-			console.log(JSON.stringify(resp))
 			s.reply("登陆暂时不可用,已自动为您通知管理员")
-			sillyGirl.notifyMasters("报告管理员，客户登陆失败，nark疑似寄了")
+			sillyGirl.notifyMasters("报告管理员，客户登陆失败，nark疑似寄了\n"+JSON.stringify(resp))
 			return
 		}
 
@@ -97,7 +98,13 @@ function main(){
 				s.reply("请输入验证码：")
 			inp=s.listen(handle,WAIT)
 			if(inp==null){
+				if(i == VerifyTimes-1)
+					s.reply("您已超时，请重新登录")
 				continue
+			}
+			else if(inp.getContent()=="q"){
+				s.reply("已退出")
+				return
 			}
 			if(inp.getContent().length!=6){
 				s.reply("验证码错误，请重新输入")
@@ -117,11 +124,18 @@ function main(){
 				let data=JSON.parse(resp.body)
 				if(!data.success){
 					if(data.data.status==555 && data.data.mode=="USER_ID"){
-						s.reply("您的账号需验证身份,请输入你的身份证前2位与后4位")
+						s.reply("您的账号需验证身份,请输入你的身份证前2位与后4位:")
 						for(j=0;j<VerifyTimes;j++){
 							inp=s.listen(handle,WAIT)
-							if(inp == null)
+							if(inp == null){
+								if(j == VerifyTimes-1)
+									s.reply("您已超时，请重新登录")
 								continue
+							}
+							else if(inp.getContent()=="q"){
+								s.reply("已退出")
+								return
+							}
 							resp=request({
    								url:nark+"/api/VerifyCardCode",
     							method:"post",
@@ -138,21 +152,51 @@ function main(){
 								break
 							}
 							else if(data3.message){
-								s.reply(data3.message+"，请重新输入")
+								if(j < VerifyTimes-1)
+									s.reply(data3.message+"，请重新输入")
+								else
+									s.reply("错误次数过多，请重新登陆！")
 							}
 							else{
 								s.reply("未知情况，请联系管理员")
-								console.log(JSON.stringify(resp))
+								s.notifyMasters(JSON.stringify(resp))
 								break
 							}
 						}
 					}
 					else if(data.data.status==555 && data.data.mode=="HISTORY_DEVICE"){
-						s.reply("您的账号需验证设备，请联系管理员")
-						sillyGirl.notifyMasters(s.platform()+":"+s.getUserId()+"\n登陆失败，需进行设备验证，请联系开发者")
+						s.reply("您的账号需验证设备，请在三分钟内前往京东APP>设置>账户安全 新设备登录>确认登录\n\n请在完成如上操作后,回复“已确认”")
+						inp=s.listen(handle,3*60*1000)
+						if(inp && inp.getContent()=="q"){
+							s.reply("已退出")
+							return
+						}
+						else{
+							resp=request({
+   								url:nark+"/api/VerifyCardCode",
+    							method:"post",
+								body:{
+  									"Phone": Tel,
+  									"QQ": "",
+  									"qlkey": 0,
+  									"Code": 1111
+								}
+							})
+							let data3=JSON.parse(resp.body)
+							if(data3.success){
+								env.value=data3.data.ck
+							}
+							else{
+								s.reply("登录失败，请联系管理员")
+								s.notifyMasters("客户登录失败"+JSON.stringify(resp))
+							}
+						}
 					}
 					else if(data.message){
-						s.reply(data.message+",请重新输入")
+						if(i < VerifyTimes-1)
+							s.reply(data.message+",请重新输入")
+						else
+							s.reply("错误次数过多，请重新登陆")
 					}
 				}
 				else{
@@ -163,6 +207,7 @@ function main(){
 			}
 			catch(err){
 				s.reply("未知错误,请联系管理员："+err)
+				s.notifyMasters("登录出错，请联系开发者\n"+err)
 			}
 			sleep(3000)
 		}
