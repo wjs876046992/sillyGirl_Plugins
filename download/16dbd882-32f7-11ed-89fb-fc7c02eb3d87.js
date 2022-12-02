@@ -1,8 +1,8 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.5
+* @version v1.1.1
 * @create_at 2022-09-19 15:06:22
-* @description nark对接，默认禁用，可修改默认上车容器,需安装qinglong模块
+* @description nark对接，默认禁用，可修改默认上车容器,本插件仅适用带芝士版本傻妞，需安装qinglong与something模块
 * @title nark登陆
 * @rule raw ^(登陆|登录)$
 * @rule raw [\S ]*pin=[^;]+; ?wskey=[^;]+;[\S ]*
@@ -12,6 +12,7 @@
 * @disable false
 */
 
+/***************配置****************** */
 //默认上车青龙容器序号
 const DefaultQL=1
 
@@ -20,14 +21,24 @@ const GroupWhiteList=[758657899]
 
 //客户黑名单，黑名单客户禁止上车，例:["123213","1434234"]
 const BlackList=[]
+/************************************** */
+
+
+
+
+
+
 
 const ql=require("qinglong")
+const st=require("something")
 const s = sender
 const sillyGirl=new SillyGirl()
+const WAIT=60*1000
+const VerifyTimes=3
+
+const handle=function(s){s.recallMessage(s.getMessageId())}
 
 function main(){
-
-	console.log(s.getChatId())
 	if(BlackList.indexOf(s.getUserId())!=-1){
 		s.reply("禁止上车，请联系管理员")
 		return
@@ -43,9 +54,7 @@ function main(){
 		remarks:""
 	}
 	if(s.getContent()=="登陆"||s.getContent()=="登录"){
-		const WAIT=60*1000
 		const nark=(new Bucket("jd_cookie")).get("nolan_addr")
-		env.name="JD_COOKIE"
 		if(nark==""){
 			if(s.isAmdin())
 				s.reply("请使用命令set jd_cookie nolan_addr http://xx.xx.xx.xx 对接nark")
@@ -53,165 +62,17 @@ function main(){
 				s.reply("未对接登陆，请联系管理员")
 			return
 		}
-
-		var handle=function(s){s.recallMessage(s.getMessageId())}
-	
-		s.reply("请输入京东登陆手机号码(输入q退出)：")
-		let inp=s.listen(handle,WAIT)
-		if(inp==null){
-			s.reply("输入超时，请重新登陆")
-			return
-		}
-		else if(inp.getContent()=="q"){
-			s.reply("已退出")
-			return
-		}
-		else if(inp.getContent().length!=11){
-			s.reply("手机号码错误，请重新登陆")
-			return
-		}
-		let tipid=s.reply("请稍候...")
-		let Tel=inp.getContent()
-		let resp=request({
-   			url:nark+"/api/SendSMS",
-    		method:"post",
-			body:{"Phone": Tel,"qlkey": 0}
-		})
-		s.recallMessage(tipid)
-		try{
-			let data=JSON.parse(resp.body)
-			if(!data.success && data.message){
-				s.reply(data.message)
+		let Tel=SendSMS(nark)
+		if(Tel){
+			let result=VerifyCode(nark,Tel)
+			if(result){
+				env.value=result
+				env.name="JD_COOKIE"
+			}
+			else
 				return
-			}
 		}
-		catch(err){
-			s.reply("登陆暂时不可用,已自动为您通知管理员")
-			sillyGirl.notifyMasters("报告管理员，客户登陆失败，nark疑似寄了\n"+JSON.stringify(resp))
-			return
-		}
-
-
-		const VerifyTimes=3
-		for(let i=0;i<VerifyTimes;i++){
-			if(inp)
-				s.reply("请输入验证码：")
-			inp=s.listen(handle,WAIT)
-			if(inp==null){
-				if(i == VerifyTimes-1)
-					s.reply("您已超时，请重新登录")
-				continue
-			}
-			else if(inp.getContent()=="q"){
-				s.reply("已退出")
-				return
-			}
-			if(inp.getContent().length!=6){
-				s.reply("验证码错误，请重新输入")
-				continue
-			}
-			resp=request({
-   				url:nark+"/api/VerifyCode",
-    			method:"post",
-				body:{
- 					"Phone": Tel,
- 					"QQ": "",
- 					"qlkey": 0,
-  					"Code": inp.getContent()
-				}
-			})
-			try{
-				let data=JSON.parse(resp.body)
-				if(!data.success){
-					if(data.data.status==555 && data.data.mode=="USER_ID"){
-						s.reply("您的账号需验证身份,请输入你的身份证前2位与后4位:")
-						for(j=0;j<VerifyTimes;j++){
-							inp=s.listen(handle,WAIT)
-							if(inp == null){
-								if(j == VerifyTimes-1)
-									s.reply("您已超时，请重新登录")
-								continue
-							}
-							else if(inp.getContent()=="q"){
-								s.reply("已退出")
-								return
-							}
-							resp=request({
-   								url:nark+"/api/VerifyCardCode",
-    							method:"post",
-								body:{
-  									"Phone": Tel,
-  									"QQ": "",
-  									"qlkey": 0,
-  									"Code": inp.getContent()
-								}
-							})
-							let data3=JSON.parse(resp.body)
-							if(data3.success){
-								env.value=data3.data.ck
-								break
-							}
-							else if(data3.message){
-								if(j < VerifyTimes-1)
-									s.reply(data3.message+"，请重新输入")
-								else
-									s.reply("错误次数过多，请重新登陆！")
-							}
-							else{
-								s.reply("未知情况，请联系管理员")
-								s.notifyMasters(JSON.stringify(resp))
-								break
-							}
-						}
-					}
-					else if(data.data.status==555 && data.data.mode=="HISTORY_DEVICE"){
-						s.reply("您的账号需验证设备，请在三分钟内前往京东APP>设置>账户安全 新设备登录>确认登录\n\n请在完成如上操作后,回复“已确认”")
-						inp=s.listen(handle,3*60*1000)
-						if(inp && inp.getContent()=="q"){
-							s.reply("已退出")
-							return
-						}
-						else{
-							resp=request({
-   								url:nark+"/api/VerifyCardCode",
-    							method:"post",
-								body:{
-  									"Phone": Tel,
-  									"QQ": "",
-  									"qlkey": 0,
-  									"Code": 1111
-								}
-							})
-							let data3=JSON.parse(resp.body)
-							if(data3.success){
-								env.value=data3.data.ck
-							}
-							else{
-								s.reply("登录失败，请联系管理员")
-								s.notifyMasters("客户登录失败"+JSON.stringify(resp))
-							}
-						}
-					}
-					else if(data.message){
-						if(i < VerifyTimes-1)
-							s.reply(data.message+",请重新输入")
-						else
-							s.reply("错误次数过多，请重新登陆")
-					}
-				}
-				else{
-					env.value=data.data.ck
-				}
-				if(env.value)
-					break
-			}
-			catch(err){
-				s.reply("未知错误,请联系管理员："+err)
-				s.notifyMasters("登录出错，请联系开发者\n"+err)
-			}
-			sleep(3000)
-		}
-		if(!env.value)
+		else
 			return
 	}
 	else if(s.getContent().indexOf("wskey")!=-1){
@@ -220,9 +81,16 @@ function main(){
 		env.value=s.getContent().match(/pin=[^;]+; ?wskey=[^;]+;/)[0]
 	}
 	else{
-		s.recallMessage(s.getMessageId())
-		env.name="JD_COOKIE"
-		env.value=s.getContent().match(/pt_key=[^;]+; ?pt_pin=[^;]+;/)[0]
+		let ck=s.getContent().match(/pt_key=[^;]+; ?pt_pin=[^;]+;/)[0]
+		if(st.JD_UserInfo(ck) || JD_isLogin(ck)){
+			s.recallMessage(s.getMessageId())
+			env.name="JD_COOKIE"
+			env.value=ck
+		}
+		else{
+			s.reply("cookie无效")
+			return
+		}
 	}
 	console.log(JSON.stringify(env))
 
@@ -236,13 +104,13 @@ function main(){
 	
 	result=Submit_QL(QLS[DefaultQL-1].host,ql_token,env)
 	if(result){
-		let pin=env.value.match(/(?<=pin=)[^;]+/).toString()
+		let pin=env.value.match(/(?<=pin=)[^;]+/)[0]
 		let bind=new Bucket("pin"+s.getPlatform().toUpperCase())
 		bind.set(pin,s.getUserId())
 		if(result==1)
-			sillyGirl.notifyMasters(pin+",已添加账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
+			sillyGirl.notifyMasters("报告老板！新客户[ "+pin+" ]成功添加账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
 		else if(result==2)
-			sillyGirl.notifyMasters(pin+",已更新账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
+			sillyGirl.notifyMasters("报告老板！老客户[ "+pin+" ]成功更新账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
 		s.reply("上车成功")
 	}
 	else{
@@ -259,6 +127,177 @@ function main(){
 	}
 }
 
+function JD_isLogin(ck){
+	try{
+		return Number(JSON.parse(request({
+				url:"https://plogin.m.jd.com/cgi-bin/ml/islogin",
+				headers:{
+					"Cookie": ck,
+                	"User-Agent": "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"   
+				}
+			}).body).islogin)
+	}
+	catch(err){
+		return null
+	}
+}
+
+function VerifyCard(nark,Tel){
+	s.reply("您的账号需验证身份,请输入你的身份证前2位与后4位:")
+	for(j=0;j<VerifyTimes;j++){
+		inp=s.listen(handle,WAIT)
+		if(inp == null){
+			if(j == VerifyTimes-1)
+				s.reply("您已超时，请重新登录")
+			continue
+		}
+		else if(inp.getContent()=="q"){
+			s.reply("已退出")
+			return false
+		}
+		let resp=request({
+   			url:nark+"/api/VerifyCardCode",
+    		method:"post",
+			body:{
+  				"Phone": Tel,
+  				"QQ": "",
+  				"qlkey": 0,
+  				"Code": inp.getContent()
+			}
+		})
+		let data3=JSON.parse(resp.body)
+		if(data3.success){
+			return data3.data.ck
+		}
+		else if(data3.message){
+			if(j < VerifyTimes-1)
+				s.reply(data3.message+"，请重新输入")
+			else
+				s.reply("错误次数过多，请重新登陆！")
+		}
+		else{
+			s.reply("未知情况，请联系管理员\n"+JSON.stringify(resp.body))
+			return false
+		}
+	}
+	return false
+}
+
+function VerifyDevice(nark,Tel){
+	s.reply("您的账号需验证设备，请在三分钟内前往京东APP>设置>账户安全 新设备登录>确认登录\n\n请在完成如上操作后,回复“已确认”")
+	let inp=s.listen(handle,3*60*1000)
+	if(inp && inp.getContent()=="q"){
+		s.reply("已退出")
+		return false
+	}
+	else{
+		let resp=request({
+   				url:nark+"/api/VerifyCardCode",
+    			method:"post",
+				body:{
+  					"Phone": Tel,
+  					"QQ": "",
+					"qlkey": 0,
+					"Code": 1111//任意值
+				}
+		})
+		let data3=JSON.parse(resp.body)
+		if(data3.success)
+			return data3.data.ck
+		else{
+			s.reply("登录失败")
+			//s.notifyMasters("客户登录失败"+JSON.stringify(resp))
+		}
+	}
+}
+
+function VerifyCode(nark,Tel){
+	let inp=1
+	for(let i=0;i<VerifyTimes;i++){
+		if(inp)
+			s.reply("请输入验证码：")
+		inp=s.listen(handle,WAIT)
+		if(inp==null){
+			if(i == VerifyTimes-1)
+				s.reply("您已超时，请重新登录")
+				continue
+			}
+		else if(inp.getContent()=="q"){
+			s.reply("已退出")
+			return false
+		}
+		if(inp.getContent().length!=6){
+			s.reply("验证码错误，请重新输入")
+			continue
+		}
+		resp=request({
+   				url:nark+"/api/VerifyCode",
+    			method:"post",
+				body:{
+ 					"Phone": Tel,
+ 					"QQ": "",
+ 					"qlkey": 0,
+  					"Code": inp.getContent()
+				}
+		})
+		let data=JSON.parse(resp.body)
+		if(data.success)
+			return data.data.ck
+		else if(data.data.status==555 && data.data.mode=="USER_ID"){
+			return VerifyCard(nark,Tel)
+		}
+		else if(data.data.status==555 && data.data.mode=="HISTORY_DEVICE"){
+			return VerifyDevice(nark,Tel)
+		}
+		else if(data.message){
+			s.reply(data.message)
+		}
+		else{
+			s.reply("未知验证，请联系管理员:\n"+JSON.stringify(data))
+			return false
+		}
+	}
+}
+
+function SendSMS(nark){
+	s.reply("请输入京东登陆手机号码(回复q退出)：")
+	let inp=s.listen(handle,WAIT)
+	if(inp==null){
+		s.reply("输入超时，请重新登陆")
+		return false
+	}
+	else if(inp.getContent()=="q"){
+		s.reply("已退出")
+		return false
+	}
+	else if(inp.getContent().length!=11){
+		s.reply("手机号码错误，请重新登陆")
+		return false
+	}
+	let tipid=s.reply("请稍候...")
+	let Tel=inp.getContent()
+	let resp=request({
+   		url:nark+"/api/SendSMS",
+    	method:"post",
+		body:{"Phone": Tel,"qlkey": 0}
+	})
+	s.recallMessage(tipid)
+	try{
+		let data=JSON.parse(resp.body)
+		if(data.success)
+			return Tel
+		else{
+			if(data.message)
+				s.reply(data.message)
+			return false
+		}
+	}
+	catch(err){
+		s.reply("登陆暂时不可用,已自动为您通知管理员")
+		sillyGirl.notifyMasters("报告管理员，客户登陆失败，nark疑似寄了\n"+JSON.stringify(resp))
+		return false
+	}
+}
 
 function Submit_QL(host,token,env){
 	let pin=env.value.match(/(?<=pin=)[^;]+/)
@@ -287,8 +326,10 @@ function Submit_QL(host,token,env){
 			remarks=envs[index].remarks
 		else
 			remarks=s.getPlatform()+":"+s.getUserId()
-		if(ql.Update_QL_Env(host,token,id,env.name,env.value,remarks))
+		if(ql.Update_QL_Env(host,token,id,env.name,env.value,remarks)){
+			ql.Enable_QL_Envs(host,token,[id])
 			return 2
+		}
 		else
 			return 0
 	}

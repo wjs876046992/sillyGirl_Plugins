@@ -188,8 +188,7 @@ function QL_Login(host,name,password){
 			url:host+"/open/user/login",
 			method:"post",
 			headers:{
-				accept: "application/json",
-				contentType:"application/json"
+				accept: "application/json"
 			},
 			body:{"name": name,"password": password},
 			dataType: "application/json"
@@ -261,8 +260,7 @@ function Add_QL_Env(host,token,envs){
 			method:"post",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:envs,
 			dataType: "application/json"
@@ -288,8 +286,7 @@ function Update_QL_Env(host,token,id,name,value,remark){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:body,
 			dataType: "application/json"
@@ -309,8 +306,7 @@ function Delete_QL_Envs(host,token,id){
 			method:"delete",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -333,8 +329,7 @@ function Move_QL_Env(host,token,id,from,to){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{"fromIndex": from,"toIndex": to},
 			dataType: "application/json"
@@ -354,8 +349,7 @@ function Disable_QL_Envs(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -378,8 +372,7 @@ function Enable_QL_Envs(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -523,8 +516,7 @@ function Add_QL_Cron(host,token,name,task,cron){
 			method:"post",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{
 				"command": task,
@@ -553,8 +545,7 @@ function Update_QL_Cron(host,token,id,name,task,cron){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:body,
 			dataType: "application/json"
@@ -574,8 +565,7 @@ function Delete_QL_Crons(host,token,id){
 			method:"delete",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id
 		})	
@@ -597,8 +587,7 @@ function Disable_QL_Crons(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -621,8 +610,7 @@ function Enable_QL_Crons(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -663,8 +651,7 @@ function Pin_QL_Crons(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -687,8 +674,7 @@ function Unpin_QL_Crons(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -711,8 +697,7 @@ function Start_QL_Crons(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -735,8 +720,7 @@ function Stop_QL_Crons(host,token,id){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:id,
 			dataType: "application/json"
@@ -820,8 +804,7 @@ function Add_QL_Script(host,token,filename,path,content,originFilename){
 			method:"post",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{
 				"filename": filename,
@@ -849,8 +832,7 @@ function Update_QL_Script(host,token,filename,path,content){
 			method:"post",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{
 				"path":path,
@@ -877,8 +859,7 @@ function Delete_QL_Script(host,token,filename,path){
 			method:"delete",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{
 				"filename": filename,
@@ -903,8 +884,7 @@ function Task_QL_Script(host,token,filename,path){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{
 				"filename": filename,
@@ -930,8 +910,7 @@ function Stop_QL_Script(host,token,filename,path){
 			method:"put",
 			headers:{
 				accept: "application/json",
-				Authorization:token.token_type+" "+token.token,
-				contentType:"application/json"
+				Authorization:token.token_type+" "+token.token
 			},
 			body:{
 				"filename": filename,

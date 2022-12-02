@@ -6,6 +6,7 @@
 * @title 饿了么
 * @rule elm ?
 * @rule 饿了么
+* @priority 10
  * @public false
 */
 
@@ -162,11 +163,8 @@ function ElmBeans(ck){
         let info=JSON.parse(resp.body)
         let increment=0,decrement=0
 		let day0=(new Date()).getDate()
-        console.log(day0)
 		for(let i=0;i<info.records.length;i++){
 			let day=info.records[i].createdTime.match(/(?<=-)\d{1,2}(?= )/)[0]
-			if(!day0)
-				day0=day
 			if(day == day0){
                 if(info.records[i].bizType=="USE" || info.records[i].bizType=="OVERDUE")
                     decrement+=info.records[i].count

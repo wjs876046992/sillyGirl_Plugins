@@ -1,12 +1,11 @@
 /*
 * @author https://t.me/sillyGirl_Plugin
 * @create_at 2022-09-07 18:35:08
-* @description 口令解析、链接解析、变量转换、变量监控多合一，须安装something与qinglong模块
+* @description 口令解析、链接解析、变量转换、变量监控多合一，须安装something与qinglong模块，若无芝士，需在配置项填入容器信息
 * @title 白眼
-* @platform qq wx tg pgm sxg
 * @rule raw [\s\S]*?[(|)|#|@|$|%|¥|￥|!|！]([0-9a-zA-Z]{10,14})[(|)|#|@|$|%|¥|￥|!|！][\s\S]*
 * @rule raw [\s\S]*https:\/\/(.{2,}\.isvj(clou)?d\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
-* @rule raw [\s\S]*https:\/\/.{2,}\.jd\.com[\s\S]*
+* @rule raw [\s\S]*https:\/\/([\w\.]*[^u]\.jd\.com)[\s\S]*
 * @rule raw [\s\S]*export \w+[ ]*=[ ]*"[^"]+"[\s\S]*
 * @rule 恢复ql spy
 * @rule 监控管理
@@ -17,9 +16,10 @@
 * @rule 清空监控队列
 * @rule 清空监控记录
 * @rule 清空白眼数据
-* @priority 10
+* @priority 1
  * @public false
-* @version v1.3.3
+* @disable false
+* @version v1.3.5
 */
 
 
@@ -28,11 +28,10 @@
 除设置的对象外，默认监控管理员消息
 注：若要正常监控，除设置监控目标外，还需傻妞监听该目标 
 
-静默：开启后傻妞将会静默处理监控消息，不会在当前会话发出通知，但静默模式对管理员消息无效
+静默：开启后傻妞将会静默处理监控消息，不会在当前会话发出通知
+静默推送：即开启静默模式，但又使用过命令"set SpyNotify qq/tg/wx 用户id"或者"set SpyGroupNotify qq/tg/wx 群id"设置过通知渠道，傻妞将会在当前会话静默，但是会将监控处理情况推送到设置的渠道，将命令中的set改为delete即为取消设置
 
-不完全静默：即开启静默模式，但又使用过命令"set SpyNotify qq/tg/wx 用户id"或者"set SpyGroupNotify qq/tg/wx 群id"设置过通知渠道，傻妞将会在当前会话静默，但是会将监控处理情况推送到设置的渠道，将命令中的set改为delete即为取消设置
-
-迁移ql spy:
+迁移ql spy（已移除本功能）:
 将会将ql spy任务备份至jd_cookie env_listens_backup(使用命令get jd_cookie env_listens_backup可以获取，不过数据过多部分平台可能获取失败，可以前往命令行傻妞交互模式或者数据管理web端查看)
 同时将删除ql spy数据(因为会跟白眼冲突，导致白眼无法作用)
 
@@ -51,15 +50,36 @@
 
 
 如果(不)需要具体的执行情况，可自行前往Que_Manager()找到相应代码添加/取消注释
-默认不解析变量中的链接(例如:消息【 export sample="https://xxxxx" 】中的链接不会进行解析)，若需解析可将下面的DecodeUrlEnv的值修改为true
 
 插件中可能需要区分的名称：监控任务名称，自定义变量转换名称，自定义链接解析名称，青龙任务名称、以及内置的链接解析的名称
 插件最后为内置解析规则，同自定义解析规则，可自行添加
 */
-//
+
+/*****************配置***************************/
+/*容器信息，例：
+var QLS=[
+    {
+        "host":"http://127.0.0.1:5700",     //容器1地址
+        "client_id":"aaaaaaaa",         //容器应用id
+        "client_secret":"AAAAAAAA", //容器应用密钥
+        "disable":false,    //导入监控任务时本容器是否默认不监控
+        "name":"服务器1"   //容器名
+    },
+    {
+        "host":"http://127.0.0.1:5800",     
+        "client_id":"bbbbbbbb",        
+        "client_secret":"BBBBBBBBBBBBBBBBB", 
+        "disable":false,   
+        "name":"服务器2"   
+    }
+]*/
+
+var QLS=[]
+
 const NotifyMode=false
 //监控黑名单
 const BlackList=["162726413","5036494307"]
+/************************************************/
 
 /*
 2022-8-27 v1.0.0 
@@ -82,6 +102,8 @@ const BlackList=["162726413","5036494307"]
 2022-9-21 v1.3.0 修复任务时间间隔失效问题
 2022-10-15 v1.3.2 链接解析规则支持正则
 2022-11-19 v1.3.3 智能解析链接型变量，新增部分链接内置解析规则
+2022-11-29 v1.3.4 不再使用芝士“青龙管理”命令信息，容器信息自填
+2022-12-03 v1.3.5 支持多参数-->单变量
 
 
 /*****************数据存储******************/
@@ -116,28 +138,58 @@ jd_cookie spy_targets_new：监控目标
 jd_cookie spy_envtrans_new：变量转换
 [{ori:原变量,redi:转换后变量,name:备注名称}]
 
-jd_cookie spy_urldecode_new：链接解析
+jd_cookie spy_urldecode_new：链接解析规则
 [{
-	keyword:url关键词,
-	trans:[{
-		ori:url中需要提取的参数名(-1表示直接使用整段url),
-		redi:提取的参数使用的变量名
-		}]
+	keyword:url关键词,string或者regdex
+	trans:[
+		{
+			ori:url中需要提取的参数的参数名（若使用整段url作为变量值，则本项为-1；若需提取多个参数值作为变量值，则参数名间以一个空格隔开,并在sep项填入分割符）
+			redi:提取的参数使用的变量名,
+			sep:当需要提取url中多个参数值作为一个变量值时，各个不同参数值间所使用的分割符
+		}
+	]
 	name:备注名称
 }]
-
+例：https://lzkj-isv.isvjcloud.com/app?a=1111&b=2222&c=3333 采用以下解析规则时
+[{
+	keyword:"https://lzkj-isv.isvjcloud.com/app",
+	trans:[
+		{
+			ori:"a b",
+			redi:"AB",
+			sep:"_"
+		},
+		{
+			ori:"c",
+			redi:"C"
+		}
+	]
+	name:备注名称
+}]
+将会得到如下解析结果
+export AB="1111_2222"
+export C="3333"
 */
 
 const ql=require("qinglong")
 const st=require("something")
 
 const s = sender
-const sillyGirl = new SillyGirl()
 const db = new Bucket("jd_cookie")
 
 
 function main() {
 	var msg = s.getContent()
+	if(!QLS.length){	
+		let qldb = new Bucket("qinglong")
+		let data = qldb.get("QLS")
+		if (data == "") {
+			s.reply("未对接青龙，若有芝士，请先前往‘青龙管理’添加青龙容器，否则请在插件内填入容器信息，已退出")
+			return
+		}
+		else
+			QLS = JSON.parse(data)
+	}
 	if (IsTarget() || s.isAdmin()) {//仅对监控目标和管理员消息监控
 	  //try{	
 		//变量监控
@@ -161,7 +213,7 @@ function main() {
 			}
 		}
 		//链接监控
-		else if (msg.match(/.isvj(clou)?d/) ) {
+		else if (msg.match(/.isvj(clou)?d/) || msg.match(/\.\jd\.com/) ) {
 			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*/g)
 			Urls_Decode(urls)
 		}
@@ -233,14 +285,6 @@ function main() {
 function Spy_Manager() {
 	const LIMIT = 24//循环次数限制，防止意外死循环
 	const WAIT = 60 * 1000//输入等待时间
-	let notify = ""
-	let qldb = new Bucket("qinglong")
-	let data = qldb.get("QLS")
-	if (data == "") {
-		s.reply("未对接青龙，请先前往‘青龙管理’添加青龙容器，已退出")
-		return
-	}
-	let QLS = JSON.parse(data)
 	let data1 = db.get("env_listens_new")
 	let silent = db.get("spy_silent_new")
 	let data2 = db.get("spy_targets_new")
@@ -272,15 +316,15 @@ function Spy_Manager() {
 		}
 		if (inp != null)
 			Print_SpyMenu(Listens, silent, targets)
-		let temp=s.listen(WAIT)
-		if(temp!=null)
-			inp = temp.getContent()
+		inp=s.listen(WAIT)
+		if(!inp)
+			continue
 		else
-			inp=null
+			inp=inp.getContent()
 		if (inp == "q") {
 			s.reply("请确认是否保存？输入\"是\"保存")
 			let temp2=s.listen(WAIT)
-			if (temp!=null&&temp2.getContent() == "是")
+			if (temp2 &&temp2.getContent() == "是")
 				s.reply(SaveData(Listens, silent, targets, trans, urldecodes))
 			else
 				s.reply("未保存本次修改内容")
@@ -295,7 +339,7 @@ function Spy_Manager() {
 		else if (inp == "a") {
 			if (silent != "true"){
 				silent = "true"
-				s.reply("已开启静默!\n若需获取监控情况，可使用命令\n\set SpyNotify tg(或qq、wx) id\n或者\nset SpyGroupNotify tg(或qq、wx) 群id\n设置推送渠道")
+				s.reply("已开启静默!\n若需获取监控情况，可在完成设置后使用命令\n\set SpyNotify tg(或qq、wx) id\n或者\nset SpyGroupNotify tg(或qq、wx) 群id\n设置推送渠道")
 			}
 			else{
 				silent = "false"
@@ -769,14 +813,6 @@ function Env_Listen(envs) {
 		}
 	}
 
-	let qldb = new Bucket("qinglong")
-	let data = qldb.get("QLS")
-	if (data == "") {
-		Notify("醒一醒，你都没对接青龙，使用\"青龙管理\"命令对接青龙")
-		return
-	}
-	let QLS = JSON.parse(data)
-
 	//分析变量是否为监控变量，是否为重复线报，变量对应监控任务是否禁用，以及加入任务队列后是否执行
 	let Listens = []//监控配置数据
 	let data3 = db.get("env_listens_new")
@@ -866,9 +902,9 @@ function Env_Listen(envs) {
 				if (db.get("spy_locked") == "false"||unlock) {
 					db.set("spy_locked", true)
 					Que_Manager(QLS)
-					return true
 				}
 			}
+			return true
 		}
 		else {
 			//if(NotifyMode)
@@ -964,13 +1000,6 @@ function Export_Spy() {
 
 function Import_Spy(data) {//console.log(data)
 	let notify = ""
-	let qldb = new Bucket("qinglong")
-	let data1 = qldb.get("QLS")
-	if (data1 == "") {
-		Notify("醒一醒，你都没对接青龙，使用\"青龙管理\"命令对接青龙")
-		return
-	}
-	let QLS = JSON.parse(data1)
 	try {
 		var newspy = JSON.parse(data)
 	}
@@ -1151,19 +1180,32 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 				}
 				if (urldecodes[i].trans[j].ori == -1) {//使用整段url作为变量
 					temp["value"] = url
-					spy.push(temp)
+				}
+				else if(urldecodes[i].trans[j].ori.indexOf(" ") !=-1){//提取多参数作为变量值
+					let pn=urldecodes[i].trans[j].ori.split(" ")
+					let pv=[]
+					pn.forEach(ele=>{
+						if(!ele)
+							return
+						let reg=new RegExp("(?<="+ele+"=)[^&]+")
+						let actid=url.match(reg)
+						if(actid)
+							pv.push(actid[0])
+					})
+					if(urldecodes[i].trans[j].sep)
+						temp["value"]=pv.join(urldecodes[i].trans[j].sep)
+					else
+						console.log("内置解析规则"+JSON.stringify(urldecodes[i])+"缺少分割符")
 				} 
 				else {//提取参数作为变量
 					let reg = new RegExp("(?<=" + urldecodes[i].trans[j].ori + "=)[^&]+")
 					let actid = url.match(reg)
-					if (actid != null) {
+					if (actid) {
 						temp["value"] = actid[0]
-						spy.push(temp)
 					}
 				}
+				spy.push(temp)
 			}
-			//				if(spy.length!=0)//成功在配置中找到并将url转换为监控变量
-			//					break
 		}
 	}
 	return spy
@@ -1174,15 +1216,7 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 
 //导入监控数据
 function Add_Spy(oldspy, newspy) {
-	let data = (new Bucket("qinglong")).get("QLS")
-	if (data == "") {
-		//		Notify("醒一醒，你都没对接青龙，使用\"青龙管理\"命令对接青龙")
-		return null
-	}
-	let QLS = JSON.parse(data)
-	//	console.log(JSON.stringify(oldspy)+"\n\n"+JSON.stringify(newspy))
 	let start = oldspy.length//保存导入结果数据中新添项开始的位置
-	//console.log(newspy.length)
 	for (let i = 0; i < newspy.length; i++) {//导入监控配置与现存某项监控的变量相同则不导入此项监控配置
 		let find=function () {
 			for (let j = 0; j < oldspy.length; j++) {
@@ -1460,9 +1494,24 @@ function Print_SpyUrl(decodes) {
 /****************内置解析链接规则****************** */
 //非activityId在最后
 var DefaultUrlDecode =[
+		{
+			keyword:"https://lzkj-isv.isvjcloud.com/app",
+			trans:[
+				{
+					ori:"a b",
+					redi:"AB",
+					sep:"_"
+				},
+				{
+					ori:"c",
+					redi:"C"
+				}
+			],
+			name:"测试规则"
+		},
 		/******************KR库********************** */
 		{
-			keyword: /https:\/\/cjhy(dz)?-isv\.isvjcloud\.com\/wxTeam\/activity/,
+			keyword: /cjhy(dz)?-isv\.isvjcloud\.com\/wxTeam\/activity/,
 			name: "CJ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1471,7 +1520,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkjdz-isv\.isvj(clou)?d.com\/wxTeam\/activity/,
+			keyword: /lzkj(dz)?-isv\.isvj(clou)?d.com\/wxTeam\/activity/,
 			name: "LZ组队瓜分",
 			trans: [{
 				ori: "activityId",
@@ -1480,7 +1529,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/cjhy(dz)?-isv\.isvjcloud\.com\/microDz\/invite\/activity/,
+			keyword: /cjhy(dz)?-isv\.isvjcloud\.com\/microDz\/invite\/activity/,
 			name: "CJ微定制",
 			trans: [{
 				ori: "activityId",
@@ -1489,7 +1538,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/cjhy(dz)?-isv\.isvjcloud\.com\/microDz\/invite\/openLuckBag/,
+			keyword: /cjhy(dz)?-isv\.isvjcloud\.com\/microDz\/invite\/openLuckBag/,
 			name: "CJ微定制福袋",
 			trans: [{
 				ori: "activityId",
@@ -1498,7 +1547,7 @@ var DefaultUrlDecode =[
 		},
 	
 		{
-			keyword: "https://lzkjdz-isv.isvjcloud.com/wxCollectCard",
+			keyword: /lzkj(dz)?-isv\.isvjcloud.com\/wxCollectCard/,
 			name: "LZ集卡抽奖",
 			trans: [{
 				ori: "activityId",
@@ -1524,7 +1573,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxgame/,
+			keyword: /lzkj(dz)?-isv\.isvj(clou)?d.com\/wxgame/,
 			name: "LZ店铺游戏",
 			trans: [{
 				ori: "activityId",
@@ -1532,7 +1581,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/lzkj(dz)?-isv.isvj(clou)?d.com\/wxSecond/,
+			keyword: /lzkj(dz)?-isv\.isvj(clou)?d\.com\/wxSecond/,
 			name: "LZ读秒拼手速",
 			trans: [{
 				ori: "activityId",
@@ -1569,7 +1618,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxFansInterActionActivity/,
+			keyword: /lzkjdz-isv.isvj(clou)?d.com\/wxFansInterActionActivity/,
 			name: "LZ粉丝互动",
 			trans: [{
 				ori: "activityId",
@@ -1579,7 +1628,7 @@ var DefaultUrlDecode =[
 
 
 		{
-			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxShareActivity/,
+			keyword: /lzkj(dz)?-isv.isvj(clou)?d.com\/wxShareActivity/,
 			name: "LZ分享有礼",
 			trans: [{
 				ori: "activityId",
@@ -1605,7 +1654,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/cjhy-isv.isvj(clou)?d.com\/sign\/sevenDay\/signActivity/,
+			keyword: /cjhy-isv.isvj(clou)?d.com\/sign\/sevenDay\/signActivity/,
 			name: "CJ超级店铺无线签到",
 			trans: [{
 				ori: "activityId",
@@ -1613,7 +1662,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/sign\/signActivity/,
+			keyword: /lzkj-isv.isvj(clou)?d.com\/sign\/signActivity/,
 			name: "LZ超级店铺无线签到",
 			trans: [{
 				ori: "activityId",
@@ -1621,7 +1670,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/sign\/sevenDay/,
+			keyword: /lzkj-isv.isvj(clou)?d.com\/sign\/sevenDay/,
 			name: "LZ超级店铺无线签到",
 			trans: [{
 				ori: "activityId",
@@ -1630,7 +1679,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkjdz-isv.isvj(clou)?d.com\/wxUnPackingActivity/,
+			keyword: /lzkjdz-isv.isvj(clou)?d.com\/wxUnPackingActivity/,
 			name: "LZ让福袋飞",
 			trans: [{
 				ori: "activityId",
@@ -1750,7 +1799,7 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: "https://prodev.m.jd.com/mall/active/dVF7gQUVKyUcuSsVhuya5d2XD4F",
+			keyword: /pro(dev)?\.m\.jd\.com\/mall\/active\/dVF7gQUVKyUcuSsVhuya5d2XD4F/,
 			name: "邀好友赢大礼",
 			trans: [{
 				ori: "code",
@@ -1784,7 +1833,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /https:\/\/shop\.m\.jd.com\/shop\/lottery/,
+			keyword: /shop\.m\.jd.com\/shop\/lottery/,
 			name: "店铺刮刮乐",
 			trans: [{
 				ori: "-1",
@@ -1998,6 +2047,22 @@ var DefaultUrlDecode =[
 			trans: [{
 				ori: "activityId",
 				redi: "jd_cjhy_wxShopGift_ids"
+			}]
+		},
+		{
+			keyword: /lorealjdcampaign-rc\.isvjcloud.com\/interact/,
+			name: "loreal邀请入会有礼",
+			trans: [{
+				ori: "activityId",
+				redi: "jd_loreal_interact_yqrhyl_activityId"
+			}]
+		},
+		{
+			keyword: /lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas/,
+			name: "邀请入会有礼",
+			trans: [{
+				ori: "activityId",
+				redi: "jd_lzkj_interactsaas_yqrhyl_activityId"
 			}]
 		},
 
