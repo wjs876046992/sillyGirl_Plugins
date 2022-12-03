@@ -211,6 +211,36 @@ function VerifyDevice(nark,Tel){
 	}
 }
 
+function VerifySendSMS(nark,Tel,message){
+	let tip="您的账号需进行短信验证，请在三分钟内使用手机"+message.phone+"向"+message.uplink_tophone+"发送"+message.uplink_tocontent
+	tip+="\n请在完成如上操作后,回复“已确认”"
+	s.reply(tip)
+	let inp=s.listen(handle,3*60*1000)
+	if(inp && inp.getContent()=="q"){
+		s.reply("已退出")
+		return false
+	}
+	else{
+		let resp=request({
+   				url:nark+"/api/VerifyCardCode",
+    			method:"post",
+				body:{
+  					"Phone": Tel,
+  					"QQ": "",
+					"qlkey": 0,
+					"Code": 1111//任意值
+				}
+		})
+		let data3=JSON.parse(resp.body)
+		if(data3.success)
+			return data3.data.ck
+		else{
+			s.reply("登录失败")
+			//s.notifyMasters("客户登录失败"+JSON.stringify(resp))
+		}
+	}
+}
+
 function VerifyCode(nark,Tel){
 	let inp=1
 	for(let i=0;i<VerifyTimes;i++){
@@ -248,6 +278,9 @@ function VerifyCode(nark,Tel){
 		}
 		else if(data.data.status==555 && data.data.mode=="HISTORY_DEVICE"){
 			return VerifyDevice(nark,Tel)
+		}
+		else if(data.data.status==555 && data.data.mode=="DANGEROUS_UP"){
+			return VerifySendSMS(nark,Tel,message)
 		}
 		else if(data.message){
 			s.reply(data.message)
