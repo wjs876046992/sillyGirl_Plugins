@@ -3,7 +3,7 @@
 * @module true
 * @create_at 2022-09-09 16:30:33
 * @description 一些通用函数和网络接口以及数据
-* @version v1.0.1
+* @version v1.0.2
 * @title something
  * @public false
 */
@@ -74,6 +74,7 @@ function GetBind(imtype,uid){
 
 //管理员通知
 function NotifyMasters(msg){
+	const sillyGirl=new SillyGirl()
     let qqm=(new Bucket("qq")).get("masters")
     let ids=qqm.split("&")
     for(let i=0;i<ids.length;i++){
@@ -123,6 +124,7 @@ function NotifyPinInGroup(totype,cid,pin,msg){
 
 //向绑定pin的用户全平台推送msg
 function NotifyPin(pin,msg){
+	const sillyGirl=new SillyGirl()
 	let to=[]
 	
 	let uid=(new Bucket("pinQQ")).get(pin)
@@ -161,6 +163,7 @@ function NotifyPin(pin,msg){
 
 //获取傻妞数据库mainkey下设置的通知渠道发送msg消息
 function NotifyMainKey(mainKey, isGroup, msg) {
+	const sillyGirl=new SillyGirl()
 	let record = []//记录已通知[{imType:qq/tg/wx,id:ID}]
 	let NotifyTo = {
 		platform: "",
@@ -239,7 +242,7 @@ function JD_BeanInfo(ck,days){
 			dataType:"json",
 			body: "body="+body+"&appid=ld",
 			headers: {
-				"User-Agent": "jdltapp;iPad;3.7.0;14.4;network/wifi;hasUPPay/0sillyGirl.pushNoticeIsOpen/0;lang/zh_CN;model/iPad7,5;addressid/;hasOCPay/0;appBuild/1017;supportBestPay/0;pv/4.14;apprpd/MyJD_Main;ref/MyJdMTAManager;psq/3;ads/;psn/956c074c769cd2eeab2e36fca24ad4c9e469751a|8;jdv/0|;adk/;app_device/IOS;pap/JA2020_3112531|3.7.0|IOS 14.4;Mozilla/5.0 (iPad; CPU OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1",
+				"User-Agent": "jdltapp;iPad;3.7.0;14.4;network/wifi;hasUPPay/IsOpen/0;lang/zh_CN;model/iPad7,5;addressid/;hasOCPay/0;appBuild/1017;supportBestPay/0;pv/4.14;apprpd/MyJD_Main;ref/MyJdMTAManager;psq/3;ads/;psn/956c074c769cd2eeab2e36fca24ad4c9e469751a|8;jdv/0|;adk/;app_device/IOS;pap/JA2020_3112531|3.7.0|IOS 14.4;Mozilla/5.0 (iPad; CPU OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1",
 				"Host": "api.m.jd.com",
 				"Content-Type": "application/x-www-form-urlencoded",
 				"Cookie": ck
