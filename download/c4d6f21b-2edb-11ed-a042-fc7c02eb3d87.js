@@ -26,7 +26,7 @@
 /*****************************详细说明***********************
 监控目标:
 除设置的对象外，默认监控管理员消息
-注：若要正常监控，除设置监控目标外，还需傻妞监听该目标 
+注：若要正常监控，除设置监控目标外，还需傻妞监听该目标（在傻妞后台-群组管理，添加监听目标群或者频道）
 
 静默：开启后傻妞将会静默处理监控消息，不会在当前会话发出通知
 静默推送：即开启静默模式，但又使用过命令"set SpyNotify qq/tg/wx 用户id"或者"set SpyGroupNotify qq/tg/wx 群id"设置过通知渠道，傻妞将会在当前会话静默，但是会将监控处理情况推送到设置的渠道，将命令中的set改为delete即为取消设置
@@ -74,8 +74,10 @@ var QLS=[
         "name":"服务器2"   
     }
 ]*/
-
 var QLS=[]
+
+//监控开关
+const SPY=true
 
 const NotifyMode=false
 //监控黑名单
@@ -105,6 +107,7 @@ const BlackList=["162726413","5036494307"]
 2022-11-19 v1.3.3 智能解析链接型变量，新增部分链接内置解析规则
 2022-11-29 v1.3.4 不再使用芝士“青龙管理”命令信息，容器信息自填
 2022-12-03 v1.3.5 支持多参数-->单变量
+2022-12-05 v1.3.6 增加监控开关(关闭后将仅解析)
 
 
 /*****************数据存储******************/
@@ -181,7 +184,7 @@ const db = new Bucket("jd_cookie")
 
 function main() {
 	var msg = s.getContent()
-	if(!QLS.length){	
+	if(!QLS.length && SPY){	
 		let qldb = new Bucket("qinglong")
 		let data = qldb.get("QLS")
 		if (data == "") {
@@ -194,7 +197,7 @@ function main() {
 	if (IsTarget() || s.isAdmin()) {//仅对监控目标和管理员消息监控
 	  //try{	
 		//变量监控
-		if (msg.match(/export ([^"]+)="([^"]+)"/) != null) {
+		if (SPY && msg.match(/export ([^"]+)="([^"]+)"/) != null) {
 			let names = msg.match(/(?<=export[ ]+)\w+(?=[ ]*=[ ]*"[^"]+")/g)
 			let values = msg.match(/(?<=export[ ]+\w+[ ]*=[ ]*")[^"]+(?=")/g)
 			let envs = [],urls=[]
@@ -256,9 +259,13 @@ function main() {
 			targets=[]
 		else
 			targets=JSON.parse(data)
-		targets.push({name:s.getChatId(),id:s.getChatId()})
-		db.set("spy_targets_new",JSON.stringify(targets))
-		s.reply("宝塔镇河妖")
+		if(targets.findIndex(value=>value.id==s.getChatId) != -1){
+			targets.push({name:s.getChatId(),id:s.getChatId()})
+			db.set("spy_targets_new",JSON.stringify(targets))
+			s.reply("宝塔镇河妖")
+		}
+		else
+			s.reply("唧唧复唧唧")
 	}
 
 	else if (msg == "监控管理")
@@ -798,6 +805,8 @@ function Recovery_qlspy() {
 
 function Env_Listen(envs) {
 	//console.log(JSON.stringify(envs))
+	if(!SPY)//不监控
+		return
 	if (envs.length == 0)
 		return
 	// 	检查变量名是否为用户配置的需要转换的变量名，是则先转换
@@ -1106,7 +1115,7 @@ function Que_Manager(QLS) {
 				}
 			}
 			if (!find) {
-				notify += QLS[i].name + "容器未找到任务「" + QLS[i].keywords.toString() + "」请检查是否监控任务配置有误\n"
+				notify += QLS[i].name + "容器未找到任务「" + QLS[i].keywords.toString() + "」,请检查是否监控任务配置有误,若确认无误可能不支持您的青龙版本\n"
 				continue
 			}
 			if(!todo.length){
@@ -1495,7 +1504,7 @@ function Print_SpyUrl(decodes) {
 /****************内置解析链接规则****************** */
 //非activityId在最后
 var DefaultUrlDecode =[
-		{
+		{//测试规则
 			keyword:"https://lzkj-isv.isvjcloud.com/app",
 			trans:[
 				{

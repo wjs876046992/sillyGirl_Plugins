@@ -36,7 +36,10 @@ const sillyGirl=new SillyGirl()
 const WAIT=60*1000
 const VerifyTimes=3
 
-const handle=function(s){s.recallMessage(s.getMessageId())}
+const handle=function(s){
+	if(s.getChatId())
+		s.recallMessage(s.getMessageId())
+}
 
 function main(){
 	if(BlackList.indexOf(s.getUserId())!=-1){
@@ -54,7 +57,8 @@ function main(){
 		remarks:""
 	}
 	if(s.getContent()=="登陆"||s.getContent()=="登录"){
-		const nark=(new Bucket("jd_cookie")).get("nolan_addr")
+		let jddb=new Bucket("jd_cookie")
+		const nark=jddb.get("nolan_addr")
 		if(nark==""){
 			if(s.isAmdin())
 				s.reply("请使用命令set jd_cookie nolan_addr http://xx.xx.xx.xx 对接nark")
@@ -69,8 +73,12 @@ function main(){
 				env.value=result
 				env.name="JD_COOKIE"
 			}
-			else
+			else{
+				let narkweb=jddb.get("nark_web")
+				if(narkweb)
+					s.reply("可使用网页登陆"+st.ToHyperLink(s.getPlatform(),narkweb,"JD呆瓜"))
 				return
+			}
 		}
 		else
 			return
@@ -198,7 +206,7 @@ function VerifyDevice(nark,Tel){
   					"Phone": Tel,
   					"QQ": "",
 					"qlkey": 0,
-					"Code": 1111//任意值
+					"Code": 1
 				}
 		})
 		let data3=JSON.parse(resp.body)
@@ -207,6 +215,7 @@ function VerifyDevice(nark,Tel){
 		else{
 			s.reply("登录失败")
 			//s.notifyMasters("客户登录失败"+JSON.stringify(resp))
+			return false
 		}
 	}
 }
@@ -237,6 +246,7 @@ function VerifySendSMS(nark,Tel,message){
 		else{
 			s.reply("登录失败")
 			//s.notifyMasters("客户登录失败"+JSON.stringify(resp))
+			return false
 		}
 	}
 }
