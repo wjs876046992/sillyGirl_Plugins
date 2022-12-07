@@ -1836,6 +1836,7 @@ var DefaultUrlDecode =[
 		},
 		{
 			keyword: /(lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=(10006|10070))|(lorealjdcampaign-rc\.isvjcloud.com\/interact\/index\?activityType=10006)/,
+			name: "邀请入会有礼（lzkj_loreal）",
 			trans: [{
 				ori: "-1",
 				redi: "jd_lzkj_loreal_invite_url"//kr
