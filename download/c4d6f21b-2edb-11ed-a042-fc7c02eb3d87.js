@@ -1182,7 +1182,7 @@ function Que_Manager(QLS) {
 function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 	let spy = []//解析结果：[{name:监控变量名,value:监控变量值,act:活动任务名}]
 	for (let i = 0; i < urldecodes.length; i++) {
-		if (url.match(urldecodes[i].keyword) != null) {//console.log("找到链接解析规则"+urldecodes[i].keyword)
+		if (url.match(urldecodes[i].keyword) != null) {
 			for (let j = 0; j < urldecodes[i].trans.length; j++) {
 				let temp = {
 					act: urldecodes[i].name,
@@ -1202,6 +1202,8 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 						if(actid)
 							pv.push(actid[0])
 					})
+					if(!pv.length)//未找到参数
+						break
 					if(urldecodes[i].trans[j].sep)
 						temp["value"]=pv.join(urldecodes[i].trans[j].sep)
 					else
@@ -1212,6 +1214,10 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 					let actid = url.match(reg)
 					if (actid) {
 						temp["value"] = actid[0]
+					}
+					else{
+						console.log("未找到活动id")
+						break
 					}
 				}
 				spy.push(temp)
@@ -1290,7 +1296,7 @@ function Notify(msg) {
 			}
 		}
 	}
-	else {//静默
+	else {//静默推送
 		let from = "处理来自" + s.getPlatform() + ":"
 		if (s.getChatId()) {
 			/*			if(s.getChatname()!="")
