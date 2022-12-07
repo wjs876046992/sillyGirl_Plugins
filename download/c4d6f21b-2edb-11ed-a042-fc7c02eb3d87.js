@@ -1835,7 +1835,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /(lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=10006)|(lorealjdcampaign-rc\.isvjcloud\.com\/interact\/index\?activityType=10006)/,
+			keyword: /(lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=(10006|10070))|(lorealjdcampaign-rc\.isvjcloud.com\/interact\/index\?activityType=10006)/,
 			trans: [{
 				ori: "-1",
 				redi: "jd_lzkj_loreal_invite_url"//kr
@@ -2059,7 +2059,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=10006/,
+			keyword: /lorealjdcampaign-rc\.isvjcloud\.com\/interact\/index\?activityType=10006/,
 			name: "loreal邀请入会有礼",
 			trans: [{
 				ori: "activityId",
@@ -2067,7 +2067,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas/,
+			keyword: /lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=10006/,
 			name: "邀请入会有礼",
 			trans: [{
 				ori: "activityId",
