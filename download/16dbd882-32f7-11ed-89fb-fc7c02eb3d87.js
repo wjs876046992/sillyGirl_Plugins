@@ -1,6 +1,6 @@
 /**
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.1.1
+* @version v1.1.2
 * @create_at 2022-09-19 15:06:22
 * @description nark对接，默认禁用，可修改默认上车容器,本插件仅适用带芝士版本傻妞，需安装qinglong与something模块
 * @title nark登陆
@@ -31,6 +31,7 @@ const BlackList=[]
 
 const ql=require("qinglong")
 const st=require("something")
+const jddb=new Bucket("jd_cookie")
 const s = sender
 const sillyGirl=new SillyGirl()
 const WAIT=60*1000
@@ -57,7 +58,6 @@ function main(){
 		remarks:""
 	}
 	if(s.getContent()=="登陆"||s.getContent()=="登录"){
-		let jddb=new Bucket("jd_cookie")
 		const nark=jddb.get("nolan_addr")
 		if(nark==""){
 			if(s.isAmdin())
@@ -73,12 +73,8 @@ function main(){
 				env.value=result
 				env.name="JD_COOKIE"
 			}
-			else{
-				let narkweb=jddb.get("nark_web")
-				if(narkweb)
-					s.reply("可使用网页登陆"+st.ToHyperLink(s.getPlatform(),narkweb,"JD呆瓜"))
+			else
 				return
-			}
 		}
 		else
 			return
@@ -114,7 +110,8 @@ function main(){
 	if(result){
 		let pin=env.value.match(/(?<=pin=)[^;]+/)[0]
 		let bind=new Bucket("pin"+s.getPlatform().toUpperCase())
-		bind.set(pin,s.getUserId())
+		bind.set(pin,s.getUserId())//用户绑定
+		UpdateLoginDate(pin)//更新账号更新时间
 		if(result==1)
 			sillyGirl.notifyMasters("报告老板！新客户[ "+pin+" ]成功添加账号\n--来自["+s.getPlatform()+":"+s.getUserId()+"]")
 		else if(result==2)
@@ -133,6 +130,24 @@ function main(){
 		}
 		return
 	}
+}
+
+function UpdateLoginDate(pin){
+	let config={
+		"ID":pin,
+		"Pet":false,
+		"Fruit":false,
+		"DreamFactory":false,
+		"Note":"",
+		"LoginedAt":"",
+		"ClientID":""
+	}
+	let jdNotify=new Bucket("jdNotify")
+	let data=jdNotify.get(pin)
+	if(data)
+		config=JSON.parse(data)
+	config.LoginedAt=(new Date()).toISOString()
+	jdNotify.set(pin,JSON.stringify(config))
 }
 
 function JD_isLogin(ck){
@@ -332,13 +347,17 @@ function SendSMS(nark){
 		else{
 			if(data.message)
 				s.reply(data.message)
-			return false
+			return null
 		}
 	}
 	catch(err){
-		s.reply("登陆暂时不可用,已自动为您通知管理员")
+		let notify=""
+		let narkweb=jddb.get("nark_web")
+		if(narkweb)
+			notify+="可前往呆瓜网站尝试登陆:"+narkweb
+		s.reply("登陆暂时不可用,已自动为您通知管理员"+notify)
 		sillyGirl.notifyMasters("报告管理员，客户登陆失败，nark疑似寄了\n"+JSON.stringify(resp))
-		return false
+		return null
 	}
 }
 

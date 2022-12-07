@@ -3,7 +3,7 @@
 * @module true
 * @create_at 2022-09-09 16:30:33
 * @description 青龙模块，本模块不适用最新版青龙，可能仅适用2.10.x
-* @version v1.0.1
+* @version v1.0.2
  * @public false
 * @title qinglong
 */
@@ -30,6 +30,7 @@ module.exports = {
 	Get_QL_Log:Get_QL_Log,
 
 	Get_QL_Crons:Get_QL_Crons,
+	Search_QL_Crons:Search_QL_Crons,
 	Add_QL_Cron:Add_QL_Cron,
 	Update_QL_Cron:Update_QL_Cron,
 	Delete_QL_Crons:Delete_QL_Crons,
@@ -272,6 +273,24 @@ function Add_QL_Env(host,token,envs){
 	}
 }
 
+//搜索青龙中含keyword的定时任务
+function Search_QL_Crons(host,token,keyword){
+	try{
+		let data=request({
+			url:host+"/open/crons?searchValue="+keyword,
+			method:"get",
+			headers:{
+				accept: "application/json",
+				Authorization:token.token_type+" "+token.token
+			}
+		})
+		return JSON.parse(data.body).data
+	}
+	catch(err){
+		return null
+	}
+}
+
 //修改青龙变量id:变量id,修改为name:变量名,value:变量值,remark:变量备注
 //成功返回修改后的环境变量对象
 function Update_QL_Env(host,token,id,name,value,remark){
@@ -492,7 +511,7 @@ function Get_QL_Log(host,token,name,logfile){
 //获取所有任务，返回所有任务对象数组
 function Get_QL_Crons(host,token){
 	try{
-		let data=request({
+		let data=JSON.parse(request({
 			url:host+"/open/crons",
 			method:"get",
 			headers:{
@@ -500,8 +519,11 @@ function Get_QL_Crons(host,token){
 				Authorization:token.token_type+" "+token.token
 			},
 			dataType: "application/json"
-		})
-		return JSON.parse(data.body).data	
+		}).body).data
+		if(data.data)
+			return data.data
+		else
+			return data
 	}
 	catch(err){
 		return null

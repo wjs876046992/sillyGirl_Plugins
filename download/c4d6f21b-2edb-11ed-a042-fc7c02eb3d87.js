@@ -16,10 +16,10 @@
 * @rule 清空监控队列
 * @rule 清空监控记录
 * @rule 清空白眼数据
-* @priority 1
+* @priority 10
  * @public false
 * @disable false
-* @version v1.3.5
+* @version v1.3.6
 */
 
 
@@ -76,7 +76,7 @@ var QLS=[
 ]*/
 var QLS=[]
 
-//监控开关
+//监控开关,关闭后将仅解析不监控
 const SPY=true
 
 const NotifyMode=false
@@ -189,6 +189,7 @@ function main() {
 		let data = qldb.get("QLS")
 		if (data == "") {
 			s.reply("未对接青龙，若有芝士，请先前往‘青龙管理’添加青龙容器，否则请在插件内填入容器信息，已退出")
+			s.continue()
 			return
 		}
 		else
@@ -286,7 +287,6 @@ function main() {
 		db.set("env_listens_backup", "")
 		s.reply("已删除白眼监控任务、静默设置、监控目标、变量转换、自定义链接解析、和ql spy备份数据")
 	}
-
 	return
 }
 
@@ -710,7 +710,7 @@ function Spy_Status() {
 				let towait=Listens[i].Interval*60-Math.floor((now-last)/1000)
 				if(towait<0)
 					towait=0
-				if (now-last<60*1000)
+				if (towait>0)
 					notify+="★"
 				else
 					notify+="☆"
@@ -1835,8 +1835,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /(lzkj-isv\.isvjcloud\.com\/prod\/cc\/interactsaas)|(lorealjdcampaign-rc\.isvjcloud\.com\/interact)/,
-			name: "邀请入会有礼（lzkj_loreal）",
+			keyword: /(lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=10006)|(lorealjdcampaign-rc\.isvjcloud\.com\/interact\/index\?activityType=10006)/,
 			trans: [{
 				ori: "-1",
 				redi: "jd_lzkj_loreal_invite_url"//kr
@@ -2060,7 +2059,7 @@ var DefaultUrlDecode =[
 			}]
 		},
 		{
-			keyword: /lorealjdcampaign-rc\.isvjcloud.com\/interact/,
+			keyword: /lzkj(dz)?-isv\.isvj(clou)?d\.com\/prod\/cc\/interactsaas\/index\?activityType=10006/,
 			name: "loreal邀请入会有礼",
 			trans: [{
 				ori: "activityId",
