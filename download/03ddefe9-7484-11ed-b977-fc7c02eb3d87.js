@@ -33,13 +33,13 @@ function main(){
         }
     }
     else
-        Talk(token)
+        Talk(token,text)
 }
 
 
 
 
-function Talk(token){
+function Talk(token,text){
     let limit=50
     while(limit-->0){
         let tipid=s.reply("请稍后..")
