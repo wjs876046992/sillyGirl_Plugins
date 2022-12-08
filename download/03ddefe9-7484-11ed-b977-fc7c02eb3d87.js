@@ -13,36 +13,59 @@
 const s=sender
 
 function main(){
-    let limit=50
     let token=(new Bucket("otto").get("openAI_token"))
     if(!token){
         s.reply("请使用命令'set otto openAI_token ?'设置openAI的token")
         return
     }
     let text=s.param(1)
+    if(text.match(/(\u753b|\u6765)(\u5f20|\u4e2a)\S+\u56fe?/)){
+        let data=ImageGenerations(token,{
+            "prompt": text,
+            "n": 1,
+            "size": "512x512"
+        })
+        try{
+            s.reply(image(data.data[0].url))
+        }
+        catch(err){
+            s.reply("未知错误:\n"+JSON.stringify(data))
+        }
+    }
+    else
+        Talk(token)
+}
+
+
+
+
+function Talk(token){
+    let limit=50
     while(limit-->0){
-        let back=Completions(token,{
+        let tipid=s.reply("请稍后..")
+        let data=Completions(token,{
             "model": "text-davinci-003", 
             "prompt": text,
             "temperature": 0, 
-            "max_tokens": 200
+            "max_tokens": 1024
         })
-        //console.log(JSON.stringify(back))
-        if(!back){
+        s.recallMessage(tipid)
+        //console.log(JSON.stringify(data))
+        if(!data){
             s.reply("网络错误")
             break
         }
         else{
-            if(back.error){
-                s.reply(back.error.message)
+            if(data.error){
+                s.reply(data.error.message)
                 break
             }
             else{
                 try{
-                    s.reply(back.choices[0].text)
+                    s.reply(data.choices[0].text)
                 }
                 catch(err){
-                    s.reply("未知错误\n"+JSON.stringify(back))
+                    s.reply("未知错误\n"+JSON.stringify(data))
                 }
             }
         }
@@ -55,6 +78,33 @@ function main(){
             text=next.getContent()
     }
 }
+
+/*************
+ {
+  "prompt": string（描述提示）,
+  "n": 图片生成数量,
+  "size": 图片尺寸('256x256', '512x512', '1024x1024')
+}
+ *************/
+function ImageGenerations(token,body){
+	try{
+		let data=request({
+			url:"https://api.openai.com/v1/images/generations",
+			method:"post",
+			headers:{
+				accept: "application/json",
+				Authorization:"Bearer "+token
+			},
+            body:body
+		})
+		return JSON.parse(data.body)
+	}
+	catch(err){
+		return null
+	}
+}
+
+
 
 /**
  * body={
@@ -82,7 +132,7 @@ function Completions(token,body){
 	}
 }
 
-function GetModules(token){
+function GetModels(token){
 	try{
 		let data=request({
 			url:"https://api.openai.com/v1/models",
