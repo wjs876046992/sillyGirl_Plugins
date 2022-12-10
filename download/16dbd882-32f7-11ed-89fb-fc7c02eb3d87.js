@@ -44,11 +44,11 @@ const handle=function(s){
 
 function main(){
 	if(BlackList.indexOf(s.getUserId())!=-1){
-		s.reply("禁止上车，请联系管理员")
+		s.reply("禁止上车，请联系管理员")//不需要通知请注释本行
 		return
 	}
 	else if(s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
-		s.reply("本群禁止上车")
+		s.reply("本群禁止上车")//不需要通知请注释本行
 		return
 	}
 
@@ -73,8 +73,9 @@ function main(){
 				env.value=result
 				env.name="JD_COOKIE"
 			}
-			else
-				return
+			else{
+				s.reply("您可以发送'呆瓜'获取其他登录方式")
+			}
 		}
 		else
 			return
@@ -221,7 +222,7 @@ function VerifyDevice(nark,Tel){
   					"Phone": Tel,
   					"QQ": "",
 					"qlkey": 0,
-					"Code": 1
+					"Code": "1"
 				}
 		})
 		let data3=JSON.parse(resp.body)
@@ -252,7 +253,7 @@ function VerifySendSMS(nark,Tel,message){
   					"Phone": Tel,
   					"QQ": "",
 					"qlkey": 0,
-					"Code": 1111//任意值
+					"Code": "1"
 				}
 		})
 		let data3=JSON.parse(resp.body)

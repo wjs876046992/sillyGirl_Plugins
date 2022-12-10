@@ -1,6 +1,6 @@
 /*
 * @author https://t.me/sillyGirl_Plugin
-* @version v1.0.3
+* @version v1.0.0
 * @create_at 2022-09-08 15:06:22
 * @description openAI人工智障，需设置token
 * @title openAI
@@ -19,7 +19,7 @@ function main(){
         return
     }
     let text=s.param(1)
-    if(text.match(/(\u753b|\u6765)(\u5f20|\u4e2a)\S+\u56fe?/)){
+    if(text.match(/(\u753b|\u6765)(\u5f20|\u4e2a)?\S+\u56fe?/)){
         let data=ImageGenerations(token,{
             "prompt": text,
             "n": 1,
@@ -41,6 +41,7 @@ function main(){
 
 function Talk(token,text){
     let limit=50
+    let stop=["q","闭嘴","退出"]
     while(limit-->0){
         let tipid=s.reply("请稍后..")
         let data=Completions(token,{
@@ -66,11 +67,12 @@ function Talk(token,text){
                 }
                 catch(err){
                     s.reply("未知错误\n"+JSON.stringify(data))
+                    break
                 }
             }
         }
         let next=s.listen(60*1000)
-        if(!next || next.getContent()=="q"){
+        if(!next || stop.indexOf(next.getContent())!=-1){
             s.reply("退出对话")
             break
         }

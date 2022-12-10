@@ -198,7 +198,7 @@ function main() {
 	if (IsTarget() || s.isAdmin()) {//仅对监控目标和管理员消息监控
 	  //try{	
 		//变量监控
-		if (SPY && msg.match(/export ([^"]+)="([^"]+)"/) != null) {
+		if (msg.match(/export ([^"]+)="([^"]+)"/) != null) {
 			let names = msg.match(/(?<=export[ ]+)\w+(?=[ ]*=[ ]*"[^"]+")/g)
 			let values = msg.match(/(?<=export[ ]+\w+[ ]*=[ ]*")[^"]+(?=")/g)
 			let envs = [],urls=[]
@@ -705,7 +705,7 @@ function Spy_Status() {
 		notify += "待执行 已完成 任务 冷却等待/秒 \n------------------------------\n"
 		let Listens = JSON.parse(data)
 		for (let i = 0; i < Listens.length; i++) {
-			//if (Listens[i].LastTime!=undefined) {//根据上次执行时间获取任务状态
+			if (Listens[i].LastTime!=undefined) {//根据上次执行时间获取任务状态
 				last = new Date(Listens[i].LastTime)
 				let towait=Listens[i].Interval*60-Math.floor((now-last)/1000)
 				if(towait<0)
@@ -715,7 +715,7 @@ function Spy_Status() {
 				else
 					notify+="☆"
 				notify+=fmt.sprintf("%-4v%-4v%-15v%4v\n",Listens[i].TODO.length,Listens[i].DONE.length,Listens[i].Name,towait)
-				//}
+			}
 		}
 		Notify(notify)
 	}
@@ -805,10 +805,8 @@ function Recovery_qlspy() {
 
 function Env_Listen(envs) {
 	//console.log(JSON.stringify(envs))
-	if(!SPY)//不监控
-		return
-	if (envs.length == 0)
-		return
+	if(!SPY || !envs.length)//不监控
+		return false
 	// 	检查变量名是否为用户配置的需要转换的变量名，是则先转换
 	let data2 = db.get("spy_envtrans_new")
 	if (data2 != "") {
@@ -1737,11 +1735,11 @@ var DefaultUrlDecode =[
 		},
 
 		{
-			keyword: /https:\/\/lzkj-isv.isvj(clou)?d.com\/wxKnowledgeActivity/,
-			name: "LZ知识超人",
+			keyword: /wxKnowledgeActivity/,
+			name: "知识超人",
 			trans: [{
-				ori: "activityId",
-				redi: "jd_wxKnowledgeActivity_activityId"//KR
+				ori: "-1",
+				redi: "jd_wxKnowledgeActivity_activityUrl"//KR
 			}]
 		},
 
