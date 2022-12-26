@@ -10,50 +10,50 @@
 
 
 
-module.exports = {  
-	Get_QL_Token:Get_QL_Token,
-
-	Get_QL_Envs:Get_QL_Envs,
-	Get_QL_Env:Get_QL_Env,
-	Add_QL_Env:Add_QL_Env,
-	Update_QL_Env:Update_QL_Env,
-	Delete_QL_Envs:Delete_QL_Envs,
-	Move_QL_Env:Move_QL_Env,
-	Disable_QL_Envs:Disable_QL_Envs,
-	Enable_QL_Envs:Enable_QL_Envs,
-
-	Get_QL_Config:Get_QL_Config,
-	Get_QL_Configs:Get_QL_Configs,
-	Update_QL_Config:Update_QL_Config,
-
-	Get_QL_Logs:Get_QL_Logs,
-	Get_QL_Log:Get_QL_Log,
-
-	Get_QL_Crons:Get_QL_Crons,
-	Search_QL_Crons:Search_QL_Crons,
-	Add_QL_Cron:Add_QL_Cron,
-	Update_QL_Cron:Update_QL_Cron,
-	Delete_QL_Crons:Delete_QL_Crons,
-	Disable_QL_Crons:Disable_QL_Crons,
-	Enable_QL_Crons:Enable_QL_Crons,
-	Get_QL_CronLog:Get_QL_CronLog,
-	Pin_QL_Crons:Pin_QL_Crons,
-	Unpin_QL_Crons:Unpin_QL_Crons,
-	Start_QL_Crons:Start_QL_Crons,
-	Stop_QL_Crons:Stop_QL_Crons,
-
-	Get_QL_Scripts:Get_QL_Scripts,
-	Get_QL_Script:Get_QL_Script,
-	Add_QL_Script:Add_QL_Script,
-	Update_QL_Script:Update_QL_Script,
-	Delete_QL_Script:Delete_QL_Script,
-	Task_QL_Script:Task_QL_Script,
-
-	Modify_QL_Config:Modify_QL_Config
+module.exports = {
+	//认证
+	Get_QL_Token,
+	//环境变量
+	Get_QL_Envs,
+	Get_QL_Env,
+	Add_QL_Envs,
+	Update_QL_Env,
+	Delete_QL_Envs,
+	Move_QL_Env,
+	Disable_QL_Envs,
+	Enable_QL_Envs,
+	//配置文件
+	Get_QL_Config,
+	Get_QL_Configs,
+	Update_QL_Config,
+	//日志
+	Get_QL_Logs,
+	Get_QL_Log,
+	//定时任务
+	Get_QL_Crons,
+	Search_QL_Crons,
+	Add_QL_Cron,
+	Update_QL_Cron,
+	Delete_QL_Crons,
+	Disable_QL_Crons,
+	Enable_QL_Crons,
+	Get_QL_CronLog,
+	Pin_QL_Crons,
+	Unpin_QL_Crons,
+	Start_QL_Crons,
+	Stop_QL_Crons,
+	//脚本
+	Get_QL_Scripts,
+	Get_QL_Script,
+	Add_QL_Script,
+	Update_QL_Script,
+	Delete_QL_Script,
+	Task_QL_Script,
+	//自定义
+	QLS,
+	Async_QL_Envs,  
+	Modify_QL_Config
 }
-
-
-
 
 
 function Sample(){
@@ -118,6 +118,43 @@ function Sample(){
 	return
 }
 
+//青龙变量name同步
+function Async_QL_Envs(from_host,from_token,to_host,to_token,name,value_keyword){
+	let from_envs=Get_QL_Envs(from_host,from_token)
+	let to_envs=Get_QL_Envs(to_host,to_token)
+	if(!from_envs || !to_envs)
+		return false
+	if(name){
+		from_envs=from_envs.filter(env=>env.name==name)
+		to_envs=to_envs.filter(env=>env.name==name)
+	}
+	for(let i=0;i<from_envs.length;i++){
+		let keyword=""
+		let index=0
+		if(value_keyword){
+			keyword=from_envs[i].value.match(value_keyword)
+			if(!keyword)
+				return false
+			else
+				keyword=keyword[0]
+			index=to_envs.findIndex(env=>{
+				let kt=env.match(keyword)
+				if(kt && kt[0]==keyword)
+					return true
+				else
+					return false
+			})
+		}
+		else
+			index=to_envs.findIndex(env=>env.name==from_envs[i].name)
+		if(index!=-1){
+			to_envs[index].value=from_envs[i].value
+			return Update_QL_Env(to_host,to_token,to_envs[index]._id?to_envs[index]._id:to_envs[index].id,to_envs[index].name,to_envs[index].value,to_envs[index].remarks)
+		}
+		else
+			return Add_QL_Envs(to_host,to_token,from_envs[i].name,[from_envs[i]])
+	}
+}
 
 
 //修改青龙配置文件变量
@@ -140,34 +177,47 @@ function Modify_QL_Config(host, token, envs) {
 
 //修改配置文件变量envs:[{name:变量名,value:变量值}]并执行含关键词keywords:[]的任务
 function Spy_QL_Task (host,token, envs, keywords) {
-	if (token == null)
-		return false
 	if (!Modify_QL_Config(host, token, envs)) {
 		return false
 	}
-	let crons = Get_QL_Crons(host, token)
-	if(crons==null)
+	let crons = Search_QL_Crons(host, token, keywords)
+	if(!crons)
 		return false
-	let ids=[]
-	for (let i = 0; i < crons.length; i++) {
-		if(keywords.some((value,index,array)=>
-			crons[i].command.indexOf(value) != -1 || crons[i].name.indexOf(value) != -1
-		)){
-			if(crons[i]["id"])
-				ids.push(crons[i].id)
-			else
-				ids.push(crons[i]._id)
-		}
-	}
-	if(ids.length!=0)
-		return Start_QL_Crons(host, token, ids)
 	else
-		return false
+		return Start_QL_Crons(host, token, crons[0].id?[crons[0].id]:crons[0]._id)
 }
 
 
-
-
+//获取容器信息
+function QLS(){
+	let updated=false
+	let db=new Bucket("qinglong")
+	let data=db.get("QLS")
+	if(!data)
+		return null
+	else
+		QLS=JSON.parse(data)
+	QLS.forEach(ql=>{
+		if(ql.token){
+			let envs=Get_QL_Envs(ql.host,ql.token)	//检测token是否失效
+			if(!envs){
+				console.log("更新容器"+ql.name+"token")
+				ql.token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
+				updated=true
+			}
+		}
+		else{
+			console.log("创建容器"+ql.name+"token")
+			ql.token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
+			updated=true
+		}
+		if(!ql.token)
+			console.log(ql.name+"token获取失败,请检测青龙管理容器是否配置错误\n")
+	})
+	if(updated)
+		db.set("QLS",JSON.stringify(QLS))
+	return QLS
+}
 
 
 /****************用户*******************/
@@ -254,7 +304,7 @@ function Get_QL_Env(host,token,id){
 
 //添加青龙变量envs:[{name:变量名,value:变量值,remark:变量备注}]数组
 //成功返回环境变量对象
-function Add_QL_Env(host,token,envs){
+function Add_QL_Envs(host,token,envs){
 	try{
 		let data=request({
 			url:host+"/open/envs",
@@ -277,7 +327,7 @@ function Add_QL_Env(host,token,envs){
 function Search_QL_Crons(host,token,keyword){
 	try{
 		let data=request({
-			url:host+"/open/crons?searchValue="+keyword,
+			url:host+"/open/crons?searchValue="+encodeURI(keyword),
 			method:"get",
 			headers:{
 				accept: "application/json",

@@ -19,7 +19,7 @@
 * @rule raw 查找\s\S+
  * @public false
 * @admin true
-* @version v1.8.2
+* @version v1.8.3
 */
 
 /***********青龙管理******************
@@ -86,6 +86,7 @@
 //2022-9-5 v1.8.0 适配最新傻妞
 //2022-9-12 v1.8.1 模块化
 //2022-9-12 v1.8.2 修复部分命令多容器选择的bug
+//2022-12-25 v1.8.3 更新qinglong模块token缓存机制
 
 
 const s = sender
@@ -96,19 +97,16 @@ const ql=require("qinglong")
 const st=require("something")
 	
 var ql_host=""
-var ql_client_id=""
-var ql_client_secret=""
 var ql_token=""
 
 function main(){
 	var msg=s.getContent()
 	var msg_id=s.getMessageId()
-	let data=db.get("QLS")
-	if(data==""){
+	var QLS=ql.QLS()
+	if(!QLS){
 		s.reply("醒一醒，你都没对接青龙，使用\"青龙管理\"命令对接青龙")
 		return
 	}
-	var QLS=JSON.parse(data)
 	if(msg.match(/^交换\s\d+\s\d+$/)!=null){
 		let params=msg.split(" ")
 		s.reply(Exchange_JDPin(QLS,params[1]-1,params[2]-1))
@@ -137,8 +135,7 @@ function main(){
 
 		
 	else if(msg.match(/^豆\d+$/)!=null||msg.match(/^豆\s[\d]+\s[\d]+$/)!=null){
-//		s.reply("dd")
-		s.recallMessage(msg_id)
+	//	s.recallMessage(msg_id)
 		let params=msg.split(" ")
 		if(params.length==3)//多容器
 			s.reply(Bean_Info(QLS,params[1],params[2]))
@@ -177,10 +174,8 @@ function GetJDCOOKIE(QLS,kickname){
 			continue
 		notify+="容器："+QLS[i].name+"\n"
 		ql_host=QLS[i].host
-		ql_client_id=QLS[i].client_id
-		ql_client_secret=QLS[i].client_secret
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
+		ql_token=QLS[i].token
+		if(!ql_token){
 			s.reply("容器"+QLS[i].name+"token获取失败,跳过\n")
 			continue
 		}
@@ -203,6 +198,7 @@ function GetJDCOOKIE(QLS,kickname){
 		}
 	}
 	s.recallMessage(tipid)
+	sleep(200)//撤回休眠，再回复，不然tg报错
 	if(!find)
 		s.reply("未找到使用该昵称的京东账号")	
 	else
@@ -223,10 +219,8 @@ function GetJDKickName(QLS,pin){
 		if(QLS[i].disable)
 			continue
 		ql_host=QLS[i].host
-		ql_client_id=QLS[i].client_id
-		ql_client_secret=QLS[i].client_secret
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
+		ql_token=QLS[i].token
+		if(!ql_token){
 			s.reply("容器"+QLS[i].name+"token获取失败,跳过\n")
 			continue
 		}
@@ -275,11 +269,11 @@ function Bean_Info(QLS,n,m){
 	let notify="\n-最近收入\n"
 	let latest=3//最近收入项数
 	ql_host=QLS[n-1].host
-	ql_client_id=QLS[n-1].client_id
-	ql_client_secret=QLS[n-1].client_secret
-	ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-	if(ql_token==null)
-		return "token获取失败，退出"
+	ql_token=QLS[n-1].token
+	if(!ql_token){
+		s.reply("容器"+QLS[i].name+"token获取失败")
+		return
+	}
 	let envs=ql.Get_QL_Envs(ql_host,ql_token)
 	if(m>envs.length)
 		return "查询序号大于容器变量数量，退出"
@@ -331,11 +325,9 @@ function SaveJDUserName(QLS){
 	let tipid=s.reply("正为您保存，请稍等...")
 	for(let i=0;i<QLS.length;i++){
 		ql_host=QLS[i].host
-		ql_client_id=QLS[i].client_id
-		ql_client_secret=QLS[i].client_secret
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
-			notify+="容器【"+QLS[i].name+"】token获取失败,跳过\n"
+		ql_token=QLS[i].token
+		if(!ql_token){
+			s.reply("容器"+QLS[i].name+"token获取失败,跳过\n")
 			continue
 		}
 		notify+="--------【"+QLS[i].name+"】--------\n"
@@ -361,6 +353,7 @@ function SaveJDUserName(QLS){
 	}
 	(new Bucket("jd_cookie")).set("pinName",JSON.stringify(names))
 	s.recallMessage(tipid)
+	sleep(200)//撤回休眠，再回复，不然tg报错
 	return "已保存:\n"+notify
 }
 
@@ -389,8 +382,7 @@ function Recovery_qlEnv(QLS){
 		let inp=Get_QL(QLS)
 		if(inp==-1)
 			return "获取QLS失败，退出"	
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null)
+		if(!ql_token)
 			return "容器"+QLS[i].name+"token获取失败,退出"
 			
 		let envs=ql.Get_QL_Envs(ql_host,ql_token)
@@ -419,7 +411,7 @@ function Recovery_qlEnv(QLS){
 //		addenvs=JSON.parse(JSON.stringify(addenvs))//????
 //		s.reply(JSON.stringify(addenvs))
 		if(addenvs.length>0)
-			suss=ql.Add_QL_Env(ql_host,ql_token,addenvs)
+			suss=ql.Add_QL_Envs(ql_host,ql_token,addenvs)
 		else{
 			s.reply("该备份容器所有变量已存在于选择的容器中,已忽略")
 			continue
@@ -444,10 +436,8 @@ function Backup_qlEnv(QLS){
 			envs:[]//环境变量
 		})
 		ql_host=QLS[i].host
-		ql_client_id=QLS[i].client_id
-		ql_client_secret=QLS[i].client_secret
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
+		ql_token=QLS[i].token
+		if(!ql_token){
 			notify+="容器"+QLS[i].name+"token获取失败,跳过\n"
 			continue
 		}
@@ -480,11 +470,9 @@ function Delete_JDCK_disabled(QLS){
 		let envsID=[]//将要删除ck的id
 		let pins=[]//将要删除ck的pin
 		ql_host=QLS[j].host
-		ql_client_id=QLS[j].client_id
-		ql_client_secret=QLS[j].client_secret
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
-			notify+="容器"+QLS[j].name+"token获取失败,跳过\n"
+		ql_token=QLS[i].token
+		if(!ql_token){
+			notify+="容器"+QLS[i].name+"token获取失败,跳过\n"
 			continue
 		}
 		var envs=ql.Get_QL_Envs(ql_host,ql_token)	
@@ -531,10 +519,8 @@ function Notify_JDCK_disabled(QLS){
 		if(QLS[j].disable)
 			continue
 		ql_host=QLS[j].host
-		ql_client_id=QLS[j].client_id
-		ql_client_secret=QLS[j].client_secret
-		ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
+		ql_token=QLS[j].token
+		if(!ql_token){
 			notify+="容器"+QLS[j].name+"token获取失败,跳过\n"
 			continue
 		}
@@ -583,6 +569,7 @@ function Notify_JDCK_disabled(QLS){
 		}
 	}
 	s.recallMessage(tipid)
+	sleep(200)//撤回休眠，再回复，不然tg报错
 	if(!record.length)
 		return "您的客户全都没有失效耶~"
 	else
@@ -594,8 +581,7 @@ function Move_qlEnv(QLS,from,to_index){
 	let suss=false
 	if(Get_QL(QLS)==-1)
 		return "获取QLS失败"
-	ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-	if(ql_token==null)
+	if(!ql_token)
 		return "青龙对接失败，请检查青龙管理是否配置有误"
 	let envs=ql.Get_QL_Envs(ql_host,ql_token)
 	if(envs==null)
@@ -655,8 +641,7 @@ function Exchange_JDPin(QLS,x,y){
 	let suss=null
 	if(Get_QL(QLS)==-1)
 		return "获取QLS失败"
-	ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-	if(ql_token==null)
+	if(!ql_token)
 		return "token获取失败,退出"
 	let envs=ql.Get_QL_Envs(ql_host,ql_token)
 	if(envs==null)
@@ -694,15 +679,18 @@ function Get_QL(QLS){
 		if(n=="q"||n>QLS.length)
 			return -1
 		n=n-1
-		ql_host=QLS[n].host
-		ql_client_id=QLS[n].client_id
-		ql_client_secret=QLS[n].client_secret
-		return n
+		try{
+			ql_host=QLS[n].host
+			ql_token=QLS[n].token
+			return n
+		}
+		catch(err){
+			return -1
+		}
 	}
 	else{
 		ql_host=QLS[0].host
-		ql_client_id=QLS[0].client_id
-		ql_client_secret=QLS[0].client_secret
+		ql_token=QLS[0].token
 		return 0
 	}
 }

@@ -25,12 +25,11 @@ const sillyGirl=new SillyGirl()
 
 function main(){
 	let notify=""
-	let data=(new Bucket("qinglong")).get("QLS")
-	if(data==""){
+	let QLS=ql.QLS()
+	if(!QLS){
 		s.reply("醒一醒，你都没对接青龙，使用\"青龙管理\"命令对接青龙")
 		return
 	}
-	let QLS=JSON.parse(data)
 	let record=[]//记录已通知pin，防止多容器存在同一账号时重复通知
 	let tipid=s.reply("正在为您提醒，请稍候...")
 	for(let i=0;i<QLS.length;i++){
@@ -40,16 +39,14 @@ function main(){
 			continue
 		}
 		let ql_host=QLS[i].host
-		let ql_client_id=QLS[i].client_id
-		let ql_client_secret=QLS[i].client_secret
-		let ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
+		let ql_token=QLS[i].token
+		if(!ql_token){
 			notify+="token获取失败,跳过\n"
 			continue
 		}
 		var envs=ql.Get_QL_Envs(ql_host,ql_token)	
-		if(envs==null){
-			notify+="青龙变量获取失败，跳过"
+		if(!envs){
+			notify+="变量获取失败，跳过"
 			continue
 		}
 		for(j=0;j<envs.length;j++){

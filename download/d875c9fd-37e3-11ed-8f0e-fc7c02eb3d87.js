@@ -38,11 +38,11 @@ function main(){
         data.forEach((session,index)=>{
             if(display_state.indexOf(session.state) == -1)
                 return
-            let name=session.name.substring(0,8)
+            let name=session.name
             let size=(session.size/1024/1024/1024).toString().substring(0,4)
             let progress=(session.progress*100).toString().substring(0,3)
             let speed=(session.dlspeed/1024).toString().substring(0,4)
-            notify+=fmt.sprintf("%2v %-10v %5vGB %5v%% %5vKB/s ",index+1,name,size,progress,speed)
+            notify+=fmt.sprintf("%2v、【%v】\n%5vGB %5v%% %5vKB/s ",index+1,name,size,progress,speed)
             if(session.state=="pausedDL")
                 notify+=" 暂停\n\n"
             else if(session.state=="queuedDL")

@@ -28,6 +28,7 @@
 //2022-8-30 v2.1.3 适配最新傻妞
 //2022-9-4 v2.1.4 适配最新傻妞
 //2022-9-22 v2.2.0 更换触发傻妞方式 
+//2022-12-19 v2.2.1 适配最新傻妞
 
 var data=[{
 	ori:"",
@@ -65,29 +66,20 @@ function main(){
 	
 	else{
 		let command=Redirect(msg)
-		// if(command!=false){
-		// 	s.setContent(command)
-		// 	s.reply('重定向为【'+command+"】")
-		// }
-		// s.continue()
-
-		if(command==false)//非重定向命令
-			s.continue()
-		else {//命中，执行重定向
-			s.reply("执行命令:"+command+"\n"+sillyGirl.session(command)().message)
+		if(command){//命中，执行重定向
+			// let tipid=s.reply("执行命令:"+command)
+			// sleep(1500)
+        	// s.recallMessage(tipid)
 			s.setContent(command)
-			while((sg=s.listen(25000))!=null)
-				s.reply(sillyGirl.session(sg.getContent())().message)
-			console.log("重定向结束")
+			//console.log("重定向："+command)
 		}
-
+		s.continue()
 	}
 	return
 }
 
 
 function Redirect(msg){
-//	s.reply("你好")
 	let storage=db.get("redirect")
 	if(storage=="")
 		return false
@@ -231,7 +223,7 @@ function GetAllRedirect(){
 		let command=Redirect(sg.getContent())
 		if(command!=false){//命中，执行重定向
 			s.setContent(command)
-			s.reply('执行命令'+command)
+			//s.reply('执行命令'+command)
 			//s.reply("执行命令:"+command+"\n"+sillyGirl.session(command)().message)
 			// let flag=0
 			// while(!flag){

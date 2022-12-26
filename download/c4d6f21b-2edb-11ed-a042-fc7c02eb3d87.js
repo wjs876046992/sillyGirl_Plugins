@@ -3,7 +3,7 @@
 * @create_at 2022-09-07 18:35:08
 * @description 口令解析、链接解析、变量转换、变量监控多合一，须安装something与qinglong模块，若无芝士，需在配置项填入容器信息
 * @title 白眼
-* @rule raw [\s\S]*?[(|)|#|@|$|%|¥|￥|!|！]([0-9a-zA-Z]{10,14})[(|)|#|@|$|%|¥|￥|!|！][\s\S]*
+* @rule raw [\s\S]*[(|)|#|@|$|%|¥|￥|!|！]([0-9a-zA-Z]{10,14})[(|)|#|@|$|%|¥|￥|!|！][\s\S]*
 * @rule raw [\s\S]*https:\/\/(.{2,}\.isvj(clou)?d\.com(\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*)?)[\s\S]*
 * @rule raw [\s\S]*https:\/\/([\w\.]*[^u]\.jd\.com)[\s\S]*
 * @rule raw [\s\S]*export \w+[ ]*=[ ]*"[^"]+"[\s\S]*
@@ -19,7 +19,7 @@
 * @priority 10
  * @public false
 * @disable false
-* @version v1.3.6
+* @version v1.3.7
 */
 
 
@@ -46,10 +46,7 @@
 监控状态：
 查看监控任务的未完成任务数量、已完成任务数量、以及上次任务时间
 
-其他：出现奇奇怪怪的不运行的清空可以使用‘清空监控队列’或者‘清空监控记录’命令进行重置
-
-
-如果(不)需要具体的执行情况，可自行前往Que_Manager()找到相应代码添加/取消注释
+其他：出现奇奇怪怪的不运行的情况可以使用‘清空监控队列’或者‘清空监控记录’命令进行重置
 
 插件中可能需要区分的名称：监控任务名称，自定义变量转换名称，自定义链接解析名称，青龙任务名称、以及内置的链接解析的名称
 插件最后为内置解析规则，同自定义解析规则，可自行添加
@@ -108,6 +105,7 @@ const BlackList=["162726413","5036494307"]
 2022-11-29 v1.3.4 不再使用芝士“青龙管理”命令信息，容器信息自填
 2022-12-03 v1.3.5 支持多参数-->单变量
 2022-12-05 v1.3.6 增加监控开关(关闭后将仅解析)
+//2022-12-25 v1.3.7 更新qinglong模块token缓存机制
 
 
 /*****************数据存储******************/
@@ -143,33 +141,23 @@ jd_cookie spy_envtrans_new：变量转换
 [{ori:原变量,redi:转换后变量,name:备注名称}]
 
 jd_cookie spy_urldecode_new：链接解析规则
-[{
-	keyword:url关键词,string或者regdex
-	trans:[
-		{
-			ori:url中需要提取的参数的参数名（若使用整段url作为变量值，则本项为-1；若需提取多个参数值作为变量值，则参数名间以一个空格隔开,并在sep项填入分割符）
-			redi:提取的参数使用的变量名,
-			sep:当需要提取url中多个参数值作为一个变量值时，各个不同参数值间所使用的分割符
-		}
-	]
-	name:备注名称
-}]
+
 例：https://lzkj-isv.isvjcloud.com/app?a=1111&b=2222&c=3333 采用以下解析规则时
-[{
-	keyword:"https://lzkj-isv.isvjcloud.com/app",
+{
+	keyword:"https://lzkj-isv.isvjcloud.com/app",	//必需，url关键词,string或者regdex
 	trans:[
 		{
-			ori:"a b",
-			redi:"AB",
-			sep:"_"
+			ori:"a b",	//必需，url中需要提取的参数的参数名（若使用整段url作为变量值，则本项为-1；若需提取多个参数值作为变量值，则参数名间以一个空格隔开,并在sep项填入分割符）
+			redi:"AB",	//必需，提取的参数使用的变量名
+			sep:"_"		//可选，当需要提取url中多个参数值作为一个变量值时，各个不同参数值间所使用的分割符
 		},
 		{
 			ori:"c",
 			redi:"C"
 		}
 	]
-	name:备注名称
-}]
+	name:测试规则 	//备注名称
+}
 将会得到如下解析结果
 export AB="1111_2222"
 export C="3333"
@@ -185,15 +173,11 @@ const db = new Bucket("jd_cookie")
 function main() {
 	var msg = s.getContent()
 	if(!QLS.length && SPY){	
-		let qldb = new Bucket("qinglong")
-		let data = qldb.get("QLS")
-		if (data == "") {
-			s.reply("未对接青龙，若有芝士，请先前往‘青龙管理’添加青龙容器，否则请在插件内填入容器信息，已退出")
-			s.continue()
+		QLS=ql.QLS()
+		if(!QLS){
+			s.reply("请先使用'青龙管理'对接青龙或者在插件内填写监控容器")
 			return
 		}
-		else
-			QLS = JSON.parse(data)
 	}
 	if (IsTarget() || s.isAdmin()) {//仅对监控目标和管理员消息监控
 	  //try{	
@@ -219,7 +203,8 @@ function main() {
 		}
 		//链接监控
 		else if (msg.match(/.isvj(clou)?d/) || msg.match(/\.\jd\.com/) ) {
-			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;\=]*/g)
+			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\*\+,%;\=]*/g)//.map(url=>decodeURIComponent(url))
+			//Notify(urls.toString())
 			Urls_Decode(urls)
 		}
 		//口令监控
@@ -805,7 +790,7 @@ function Recovery_qlspy() {
 
 function Env_Listen(envs) {
 	//console.log(JSON.stringify(envs))
-	if(!SPY || !envs.length)//不监控
+	if(!envs.length)//不监控
 		return false
 	// 	检查变量名是否为用户配置的需要转换的变量名，是则先转换
 	let data2 = db.get("spy_envtrans_new")
@@ -815,11 +800,13 @@ function Env_Listen(envs) {
 			for (let j = 0; j < trans.length; j++) {
 				if (envs[i].name == trans[j].ori) {
 					envs[i].name = trans[j].redi
-					Notify(st.ToEasyCopy(s.getPlatform(),"变量转换","export " + envs[i].name + "=\"" + envs[i].value + "\""))
+					Notify(st.ToEasyCopy(s.getPlatform(),"变量转换：\n"+trans[j].name,"export " + envs[i].name + "=\"" + envs[i].value + "\""))
 				}
 			}
 		}
 	}
+	if(!SPY)//不监控
+		return false
 
 	//分析变量是否为监控变量，是否为重复线报，变量对应监控任务是否禁用，以及加入任务队列后是否执行
 	let Listens = []//监控配置数据
@@ -952,7 +939,7 @@ function Urls_Decode(urls) {
 			spy = DecodeUrl(urls[i], urldecodes)
 		}
 		if(spy.length==0){//未能根据自定义解析规则解析出变量，使用内置解析规则
-			spy = DecodeUrl(urls[i], DefaultUrlDecode)
+			spy = DecodeUrl(urls[i], UrlDecodeRule)
 			if(spy.length==0){
 				notify += "未解析到变量\n"
 				continue
@@ -1073,8 +1060,8 @@ function Que_Manager(QLS) {
 				//				notify+=QLS[i].name+"无任务，跳过\n"
 				continue
 			}
-			let token = ql.Get_QL_Token(QLS[i].host, QLS[i].client_id, QLS[i].client_secret)
-			if (token == null) {
+			let token = QLS[i].token
+			if (!token) {
 				notify += QLS[i].name + "token获取失败，跳过\n"
 				continue
 			}
@@ -1195,7 +1182,7 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 					pn.forEach(ele=>{
 						if(!ele)
 							return
-						let reg=new RegExp("(?<="+ele+"=)[^&]+")
+						let reg=new RegExp("(?<="+ele+"(=|%3D))[^&%]+")
 						let actid=url.match(reg)
 						if(actid)
 							pv.push(actid[0])
@@ -1208,7 +1195,7 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 						console.log("内置解析规则"+JSON.stringify(urldecodes[i])+"缺少分割符")
 				} 
 				else {//提取参数作为变量
-					let reg = new RegExp("(?<=" + urldecodes[i].trans[j].ori + "=)[^&]+")
+					let reg = new RegExp("(?<=" + urldecodes[i].trans[j].ori + "(=|%3D))[^&%]+")
 					let actid = url.match(reg)
 					if (actid) {
 						temp["value"] = actid[0]
@@ -1398,7 +1385,7 @@ function SaveData(Listens, silent, targets, trans, urldecodes) {
 //打印监控主菜单页面
 function Print_SpyMenu(Listens, silent, targets) {
 	//	s.reply(JSON.stringify(targets))
-	let notify = "----------------------\n请选择编辑对象\n----------------------\n(-数字删除,0添加,q退出，wq保存)\n"
+	let notify = "----------------------\n请选择编辑对象\n----------------------\n"
 	for (let i = 0; i < Listens.length; i++) {
 		let name = Listens[i]["Name"]
 		if (name == undefined)
@@ -1417,29 +1404,33 @@ function Print_SpyMenu(Listens, silent, targets) {
 	notify += "c、链接解析\n"
 	notify += "d、监听目标:"
 	for (let i = 0; i < targets.length; i++) {
-		if (targets[i].name != "")
+		if (targets[i].name)
 			notify += "【" + targets[i].name + "】"
 		else
 			notify += "【" + targets[i].id + "】"
 	}
+	notify+="\n------------------------\n"
+	notify+="[-删除][0增加][u返回]"
 	s.reply(notify)
 }
 
 //打印监控菜单-监听目标页面
 function Print_SpyTargets(targets) {
-	let notify = "请选择监听目标进行编辑：\n(-数字删除，0增加，u返回)\n"
+	let notify = "请选择监听目标进行编辑：\n"
 	for (let i = 0; i < targets.length; i++) {
 		notify += (i + 1) + "、"
 		if (targets[i].name != "")
 			notify += targets[i].name + ":"
 		notify += targets[i].id + "\n"
 	}
+	notify+="------------------------\n"
+	notify+="[-删除][0增加][u返回]"
 	s.reply(notify)
 }
 
 //打印监控菜单-监听任务-指定容器页面
 function Print_SpyClients(QLS, clients) {
-	notify = "请选择指定容器进行编辑：\n(-数字删除，0增加，u返回)\n"
+	notify = "请选择指定容器进行编辑：\n"
 	for (let i = 0; i < clients.length; i++) {
 		let find = false
 		for (j = 0; j < QLS.length; j++)
@@ -1450,20 +1441,24 @@ function Print_SpyClients(QLS, clients) {
 		if (!find)
 			notify += (i + 1) + "、未找到容器[" + clients[i] + "]，请确认您在’青龙管理‘内有对应此应用ID的容器\n"
 	}
+	notify+="------------------------\n"
+	notify+="[-删除][0增加][u返回]"
 	s.reply(notify)
 }
 
 //打印监控菜单-监听任务-洞察变量页面
 function Print_Spy_Envs(envs) {
-	let notify = "请选择洞察变量进行编辑：\n(-数字删除，0增加，u返回)\n"
+	let notify = "请选择洞察变量进行编辑：\n"
 	for (let i = 0; i < envs.length; i++)
 		notify += (i + 1) + "、" + envs[i] + "\n"
+	notify+="------------------------\n"
+	notify+="[-删除][0增加][u返回]"
 	s.reply(notify)
 }
 
 //打印监控菜单-监控任务页面
 function Print_SpyItem(spy, QLS) {
-	let notify = "请选择要编辑的属性:\n(u返回,q退出,wq保存)\n"
+	let notify = "请选择要编辑的属性:\n"
 	notify += "1、监视任务名称：" + spy.Name + "\n"
 	notify += "2、脚本关键词：" + spy.Keyword + "\n"
 	notify += "3、洞察变量：" + spy.Envs.toString() + "\n"
@@ -1486,20 +1481,24 @@ function Print_SpyItem(spy, QLS) {
 
 //打印监控菜单-变量转换页面
 function Print_SpyTran(trans) {
-	let notify = "请选择添加或者删除变量转换规则：\n(-数字删除，0添加,u返回)\n"
+	let notify = "请选择添加或者删除变量转换规则：\n"
 	for (let i = 0; i < trans.length; i++)
 		notify += (i + 1) + "、" + trans[i].name + ":" + trans[i].ori + "-->" + trans[i].redi + "\n"
+	notify+="------------------------\n"
+	notify+="[-删除][u返回]"
 	s.reply(notify)
 }
 
 //打印监控菜单-链接解析页面
 function Print_SpyUrl(decodes) {
-	let notify = "请选择添加或者删除链接解析规则：\n(-数字删除，0添加,u返回)\n"
+	let notify = "请选择添加或者删除链接解析规则：\n"
 	for (let i = 0; i < decodes.length; i++) {
 		notify += (i + 1) + "、" + decodes[i].name + "(" + decodes[i].keyword + "):\n"
 		for (let j = 0; j < decodes[i].trans.length; j++)
 			notify += decodes[i].trans[j].ori + "-->" + decodes[i].trans[j].redi + "\n"
 	}
+	notify+="------------------------\n"
+	notify+="[-删除][u返回]"
 	s.reply(notify)
 }
 
@@ -1507,7 +1506,7 @@ function Print_SpyUrl(decodes) {
 
 /****************内置解析链接规则****************** */
 //非activityId在最后
-var DefaultUrlDecode =[
+var UrlDecodeRule =[
 		{//测试规则
 			keyword:"https://lzkj-isv.isvjcloud.com/app",
 			trans:[

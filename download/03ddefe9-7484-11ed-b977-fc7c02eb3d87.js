@@ -45,10 +45,15 @@ function Talk(token,text){
     while(limit-->0){
         let tipid=s.reply("请稍后..")
         let data=Completions(token,{
-            "model": "text-davinci-003", 
+            "model": "text-davinci-003",
             "prompt": text,
-            "temperature": 0, 
-            "max_tokens": 1024
+            "max_tokens": 4000,
+            "temperature": 0.5,
+            "top_p": 1,
+            "n": 1,
+            "stream": false,
+            "logprobs": null,
+            //"stop": "\n"
         })
         s.recallMessage(tipid)
         //console.log(JSON.stringify(data))

@@ -15,14 +15,12 @@ const ql=require("qinglong")
 const st=require("something")
 
 function main(){
-	let notify=""
     let days=Number(s.getContent().match(/\d+/g)[0]);
-	let data=db.get("QLS")
-	if(data==""){
+	let QLS=ql.QLS()
+	if(!QLS){
 		s.reply("查询失败，请联系管理员")//未对接青龙
 		return
 	}
-	var QLS=JSON.parse(data)
 	let bind=st.GetBind(s.getPlatform(),s.getUserId())//获取该用户所绑定的pin
 	if(bind.length==0){
 		s.reply("获取绑定信息失败或您未绑定本平台")
@@ -31,33 +29,31 @@ function main(){
 	let tipid=s.reply("正在查询,请稍等...");
 	for(let i=0;i<QLS.length;i++){
 		let ql_host=QLS[i].host
-		let ql_client_id=QLS[i].client_id
-		let ql_client_secret=QLS[i].client_secret
-		let ql_token=ql.Get_QL_Token(ql_host,ql_client_id,ql_client_secret)
-		if(ql_token==null){
-//			s.reply("容器"+QLS[i].name+"token获取失败,跳过\n")
+		let ql_token=QLS[i].token
+		if(!ql_token){
+			s.reply("容器"+QLS[i].name+"token获取失败,跳过\n")
 			continue 
 		}
 		let envs=ql.Get_QL_Envs(ql_host,ql_token)
         if(envs==null)
             continue
-		for(let j=0;j<envs.length;j++){
+		for(let j=0;j<envs.length && bind.length;j++){
 			if(envs[j].name!="JD_COOKIE")
 				continue
 			for(let k=0;k<bind.length;k++){
 				let pin=envs[j].value.match(/(?<=pt_pin=)[^;]+/g)
 				if(pin==bind[k]){
+					let msg=""
 					if(envs[j].status==1)
-						s.reply("账号【"+GetName(envs[j].value)+"】已失效")
+						msg="账号【"+GetName(envs[j].value)+"】已失效"
 					else{
 						let info=st.JD_BeanInfo(envs[j].value,days)
 						if(info==null){
 							s.reply("账号【"+GetName(envs[j].value+"】京豆数据获取失败"))
 							continue
 						}
-						let infosum=[]
-						let sum=0,expire=0
-						let temp=""
+						let infosum=[]	//各项收入统计
+						let sum=0,expire=0	//总收入与过期
 						info.forEach((value, index, array)=>{
 							//console.log(JSON.stringify(value)+"\n\n"+JSON.stringify(infosum))
 							let find=infosum.findIndex((value2, index2, array2)=>value.eventMassage==value2.eventMassage)
@@ -71,22 +67,20 @@ function main(){
 						infosum.forEach((value, index, array)=>{
 							sum+=value.amount
 							if(value.amount>50)
-								temp+=value.amount+" "+value.eventMassage+"\n"
+								msg+=value.amount+" "+value.eventMassage+"\n"
 							else if(value.amount<0)
 								expire+=value.amount
 						})
-						temp="-------账号【"+GetName(envs[j].value)+"】---------\n★净收入【"+sum+"】豆\n☆过期/使用【"+expire+"】豆\n"+temp+"...\n\n"
-						notify+=temp
-						bind.splice(k,1)//将已通知的pin从bind删除，以免重复通知
-						break						
+						msg="-------账号【"+GetName(envs[j].value)+"】---------\n★净收入【"+sum+"】豆\n☆过期/使用【"+expire+"】豆\n"+msg+"...\n\n"
+						bind.splice(k,1)//将已通知的pin从bind删除，以免重复通知			
 					}
+					s.reply(msg)
+					sleep(2000)
+					break
 				}
 			}
 		}		
 	}
-	s.recallMessage(tipid)
-	s.reply(notify)
-	return
 }
 
 

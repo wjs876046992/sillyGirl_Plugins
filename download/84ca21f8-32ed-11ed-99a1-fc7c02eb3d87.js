@@ -9,26 +9,26 @@
 */
 
 module.exports={
-	NotifyPinInGroup:NotifyPinInGroup,
-	NotifyPin:NotifyPin,
-	NotifyMainKey:NotifyMainKey,
-	NotifyMasters,NotifyMasters,
-	GetBind:GetBind,
-	ToHyperLink:ToHyperLink,
-	ToEasyCopy:ToEasyCopy,
-	formatStringLen:formatStringLen,
+	NotifyPinInGroup,
+	NotifyPin,
+	NotifyMainKey,
+	NotifyMasters,
+	GetBind,
+	ToHyperLink,
+	ToEasyCopy,
+	formatStringLen,
 
-	JD_UserInfo:JD_UserInfo,
-	JD_BeanInfo:JD_BeanInfo,
-	JD_ExpireBean:JD_ExpireBean,
-	JD_RedPacket:JD_RedPacket,
-	JD_isLogin:JD_isLogin,
+	JD_UserInfo,
+	JD_BeanInfo,
+	JD_ExpireBean,
+	JD_RedPacket,
+	JD_isLogin,
 
-	WallDecode:WallDecode,
-	WindfggDecode:WindfggDecode,
-	NolanDecode:NolanDecode,
+	WallDecode,
+	WindfggDecode,
+	NolanDecode,
 
-	SendToTG:SendToTG
+	SendToTG
 }
 
 
@@ -153,7 +153,7 @@ function NotifyPin(pin,msg){
 		to.push({imType:"sxg",uid:uid})
 		
 	for(let i=0;i<to.length;i++)
-	sillyGirl.push({
+		sillyGirl.push({
 			platform:to[i].imType,
 			userID:to[i].uid,
 			content:msg,
@@ -165,7 +165,7 @@ function NotifyPin(pin,msg){
 //获取傻妞数据库mainkey下设置的通知渠道发送msg消息
 function NotifyMainKey(mainKey, isGroup, msg) {
 	const sillyGirl=new SillyGirl()
-	let record = []//记录已通知[{imType:qq/tg/wx,id:ID}]
+	let record = []	//记录已通知[{imType:qq/tg/wx,id:ID}]
 	let NotifyTo = {
 		platform: "",
 		userID: "",
@@ -188,7 +188,7 @@ function NotifyMainKey(mainKey, isGroup, msg) {
 	}
 	return record
 }
-
+//转各平台超链接
 function ToHyperLink(type,url,title){
 	if(type=="tg"||type=="pgm")
 		return "["+title+"]("+url+")"
@@ -206,7 +206,7 @@ function JD_isLogin(ck){
 				url:"https://plogin.m.jd.com/cgi-bin/ml/islogin",
 				headers:{
 					"Cookie": ck,
-                	"User-Agent": "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"   
+                	"User-Agent":  USER_AGENT()
 				}
 			}).body).islogin)
 	}
@@ -222,7 +222,7 @@ function JD_UserInfo(ck){
 	  method:"get",
 //	  dataType:"json",
       headers: {
-		"User-Agent": USER_AGENT,
+		"User-Agent": USER_AGENT(),
         "Cookie": ck
       }
 	})
@@ -237,7 +237,8 @@ function JD_UserInfo(ck){
 //获取ck对应账号最近days天的每一项收入
 //各项收入详情[{eventMassage:活动名,amount:获得京豆数量,date:获得时间,...}]
 function JD_BeanInfo(ck,days){
-	//console.log(USER_AGENT)
+	let ua= USER_AGENT()
+	//console.log(ua)
 	let stop=false
 	let page=1
 	let info=[]//各项活动详情统计
@@ -248,7 +249,7 @@ function JD_BeanInfo(ck,days){
 			console.log("查询京豆详情死循环了")
 			break	
 		}
-		let body=escape(JSON.stringify({
+		let body=encodeURI(JSON.stringify({
 			"pageSize": "200", 
 			"page": page.toString()
 			}
@@ -259,7 +260,7 @@ function JD_BeanInfo(ck,days){
 			dataType:"json",
 			body: "body="+body+"&appid=ld",
 			headers: {
-				"User-Agent": USER_AGENT,
+				"User-Agent": ua,
 				"Host": "api.m.jd.com",
 				"Content-Type": "application/x-www-form-urlencoded",
 				"Cookie": ck
@@ -297,7 +298,7 @@ function JD_ExpireBean(ck){
 		headers:{
 				"Cookie": ck,
 				"Referer":"https://wqs.jd.com/promote/201801/bean/mybean.html",
-                "User-Agent": USER_AGENT  
+                "User-Agent": USER_AGENT()  
 		}
 	})
 	try{
@@ -413,7 +414,7 @@ const USER_AGENTS = [
 ]
 const USER_AGENT = function (){
 	return USER_AGENTS[Math.floor(Math.random()*USER_AGENTS.length)]
-}()
+}
 
 
 /*************第三方私人api******************/
@@ -499,6 +500,7 @@ function SendToTG(id, msg) {
 		}
 	})
 	try{
+		//console.log(resp.body)
 		return JSON.parse(resp.body).ok
 	}
 	catch(err){
