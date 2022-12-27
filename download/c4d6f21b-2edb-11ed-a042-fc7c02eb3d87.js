@@ -179,6 +179,9 @@ function main() {
 			return
 		}
 	}
+	else if(QLS.length){
+		QLS.forEach((ql,i)=>QLS[i].token=ql.Get_QL_Token(ql.host,ql.client_id,ql.client_secret))
+	}
 	if (IsTarget() || s.isAdmin()) {//仅对监控目标和管理员消息监控
 	  //try{	
 		//变量监控
@@ -203,7 +206,7 @@ function main() {
 		}
 		//链接监控
 		else if (msg.match(/.isvj(clou)?d/) || msg.match(/\.\jd\.com/) ) {
-			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\*\+,%;\=]*/g)//.map(url=>decodeURIComponent(url))
+			let urls = msg.match(/https:\/\/[A-Za-z0-9\-\._~:\/\?#\[\]@!$&'\*\+,%;\=]*/g).map(url=>decodeURIComponent(url))
 			//Notify(urls.toString())
 			Urls_Decode(urls)
 		}

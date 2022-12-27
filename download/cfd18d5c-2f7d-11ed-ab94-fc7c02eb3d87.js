@@ -3,7 +3,7 @@
 * @module true
 * @create_at 2022-09-09 16:30:33
 * @description 青龙模块，本模块不适用最新版青龙，可能仅适用2.10.x
-* @version v1.0.2
+* @version v1.0.3
  * @public false
 * @title qinglong
 */
@@ -327,7 +327,7 @@ function Add_QL_Envs(host,token,envs){
 function Search_QL_Crons(host,token,keyword){
 	try{
 		let data=request({
-			url:host+"/open/crons?searchValue="+encodeURI(keyword),
+			url:host+"/open/crons?searchValue="+keyword,
 			method:"get",
 			headers:{
 				accept: "application/json",
