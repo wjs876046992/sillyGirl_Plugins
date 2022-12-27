@@ -180,7 +180,7 @@ function main() {
 		}
 	}
 	else if(QLS.length){
-		QLS.forEach((ql,i)=>QLS[i].token=ql.Get_QL_Token(ql.host,ql.client_id,ql.client_secret))
+		QLS.forEach((QL,i)=>QLS[i].token=ql.Get_QL_Token(QL.host,QL.client_id,QL.client_secret))
 	}
 	if (IsTarget() || s.isAdmin()) {//仅对监控目标和管理员消息监控
 	  //try{	
