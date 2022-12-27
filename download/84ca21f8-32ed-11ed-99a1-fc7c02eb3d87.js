@@ -317,7 +317,7 @@ function JD_RedPacket(ck){
 		headers:{
 				"Cookie": ck,
 				"Referer":"https://st.jingxi.com/my/redpacket.shtml?newPg=App&jxsid=16156262265849285961",
-                "User-Agent": USER_AGENT     
+                "User-Agent": USER_AGENT()     
 		}
 	})
 	try{
