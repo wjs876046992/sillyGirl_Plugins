@@ -71,7 +71,7 @@ function main(){
 			// sleep(1500)
         	// s.recallMessage(tipid)
 			s.setContent(command)
-			//console.log("重定向："+command)
+			console.log("重定向为："+command)
 		}
 		s.continue()
 	}
@@ -223,7 +223,7 @@ function GetAllRedirect(){
 		let command=Redirect(sg.getContent())
 		if(command!=false){//命中，执行重定向
 			s.setContent(command)
-			//s.reply('执行命令'+command)
+			console.log('重定向为：'+command)
 			//s.reply("执行命令:"+command+"\n"+sillyGirl.session(command)().message)
 			// let flag=0
 			// while(!flag){

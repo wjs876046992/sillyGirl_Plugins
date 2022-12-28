@@ -64,7 +64,7 @@ function main(){
 					
 					let exbeans=0//过期京豆统计
 					expirebean.forEach(value=>exbeans+=value.expireamount)
-					if(redpackets_data.expiredBalance=="")
+					if(!redpackets_data.expiredBalance)
 						redpackets_data.expiredBalance=0
 					//console.log(envs[j].value+"\n"+redpackets_data.expiredBalance+"\n"+exbeans)
 					if(exbeans/100+Number(redpackets_data.expiredBalance)>=NUM){

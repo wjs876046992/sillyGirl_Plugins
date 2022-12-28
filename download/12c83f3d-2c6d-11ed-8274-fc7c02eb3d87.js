@@ -17,6 +17,7 @@
 * @rule ck去重
 * @rule raw 获取\S+昵称
 * @rule raw 查找\s\S+
+* @rule 查绑 ?
  * @public false
 * @admin true
 * @version v1.8.3
@@ -157,7 +158,9 @@ function main(){
 	
 	else if(msg=="ck去重")
 		s.reply(Reduce_JDCK_Repetition(QLS))
-		
+	else if(msg.indexOf("查绑")!=-1)
+		s.reply(st.GetBind(s.getPlatform(),s.param(1)).join("\n"))
+
 	return
 }
 
@@ -470,7 +473,7 @@ function Delete_JDCK_disabled(QLS){
 		let envsID=[]//将要删除ck的id
 		let pins=[]//将要删除ck的pin
 		ql_host=QLS[j].host
-		ql_token=QLS[i].token
+		ql_token=QLS[j].token
 		if(!ql_token){
 			notify+="容器"+QLS[i].name+"token获取失败,跳过\n"
 			continue
