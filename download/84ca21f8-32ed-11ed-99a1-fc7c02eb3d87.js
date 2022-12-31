@@ -3,7 +3,7 @@
 * @module true
 * @create_at 2022-09-09 16:30:33
 * @description 一些通用函数和网络接口以及数据
-* @version v1.0.3
+* @version v1.0.4
 * @title something
  * @public false
 */
@@ -50,7 +50,7 @@ function formatStringLen(strVal, len,padChar){
 	return strVal
 }
 
-//将
+//tg快捷复制
 function ToEasyCopy(imtype,title,msg){
 	if(imtype=="pgm")
 		return "【**"+title+"**】`"+msg+"`"
@@ -110,7 +110,7 @@ function NotifyMasters(msg){
 //在totype平台的群cid中向绑定京东账号pin的用户通知msg
 function NotifyPinInGroup(totype,cid,pin,msg){ 
 	let uid=(new Bucket("pin"+totype.toUpperCase())).get(pin)
-	if(uid!=""){
+	if(uid){
 		sillyGirl.push({
 			platform:totype,
 			userID:uid,
@@ -240,7 +240,7 @@ function JD_BeanInfo(ck,days){
 	let ua= USER_AGENT()
 	//console.log(ua)
 	let stop=false
-	let page=1
+	let page=1	//京豆收入页
 	let info=[]//各项活动详情统计
 	let limit=50//死循环保险
 	let day=""
@@ -265,25 +265,53 @@ function JD_BeanInfo(ck,days){
 				"Content-Type": "application/x-www-form-urlencoded",
 				"Cookie": ck
 			}
+		}	
+		let options2={
+			url:"https://bean.m.jd.com/beanDetail/detail.json?page="+page,
+			dataType:"json",
+			headers:{
+				"Cookie":ck,
+				"User-Agent":ua
+			}
 		}
-		let data=request(options);//console.log("还剩"+limit+"次循环终止"+JSON.stringify(data.body.detailList))
-		if(data.status==200&&data.body.code==0){
-			let beaninfo=data.body.detailList
-			for(let i=0;i< beaninfo.length;i++){
-                let evenday=beaninfo[i].date.match(/\d+(?= )/)[0]
+
+		let data=request(options);
+		let temp=[]	//获取到的每一项收入
+		try{
+			if(data.status==200 && data.body.code==0){
+				//console.log(JSON.stringify(data))
+				temp=data.body.detailList	
+			}
+			else{
+				console.log("数据获取失败,更换接口2")
+				data=request(options2)
+				if(data.status==200 && data.body.success){
+					//console.log(JSON.stringify(data))
+					temp=data.body.jingDetailList	
+				}
+				else{
+					console.log(JSON.stringify(data))
+					return null
+				}
+			}
+		}catch(err){
+			console.log(err)
+			return null
+		}
+		if(temp.length){	//保存收入数据
+			for(let i=0;i< temp.length;i++){
+                let evenday=temp[i].date.match(/\d+(?= )/)[0]	//收入项时间-天
                 if(evenday!=day){
-					//console.log("详情：倒数第"+days+"天："+evenday+"，收入项数："+info.length)
+					//console.log("详情：倒数第"+days+"天，收入："+JSON.stringify(info))
                     day=evenday
                     if(days--<=0){
                         stop=true
                         break
                     }
                 }
-				info.push(beaninfo[i])
+				info.push(temp[i])
 			}
 		}
-		else
-			return null
 		sleep(500)
 		page++
 	}
