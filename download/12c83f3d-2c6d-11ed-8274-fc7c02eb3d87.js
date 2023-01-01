@@ -288,30 +288,29 @@ function Bean_Info(QLS,n,m){
 	else if(info.length==0)
 		return "您今日暂无收入"
 		
-	else{//s.reply(info.length)
+	else{
 		for(let i=0;i<info.length;i++){
-			let index=InfoSum.findIndex(function(ele,index,arr){
-				return ele.eventMassage==info[i].eventMassage
+			info[i].amount=Number(info[i].amount)
+			let index=InfoSum.findIndex(ele=>{	//找到当前收入项在收入统计InfoSum中的位置（区别正负）
+				if(ele.eventMassage!=info[i].eventMassage)
+					return false
+				return (ele.amount>0 && info.amount>0)||(ele.amount<0 && info.amount<0)
 			})
-			let temp=Number(info[i].amount)
-			if(temp>0)
-				increase+=temp
-			else
-				decrease+=temp
-			if(latest-->0){//记录最近收入
+			info[i].amount>0?increase+=info[i].amount:decrease+=info[i].amount
+			if(latest-->0){//记录最近latest项收入
 				notify+=info[i].amount+" "+info[i].eventMassage+" "+info[i].date.match(/(?<= )\S+/g)+"\n"
 			}
 			if(index==-1)
-				InfoSum.push({eventMassage:info[i].eventMassage,amount:Number(info[i].amount)})
+				InfoSum.push({eventMassage:info[i].eventMassage,amount:info[i].amount})
 			else 
-				InfoSum[index].amount+=Number(info[i].amount)
+				InfoSum[index].amount+=info[i].amount
 		}
 	}	
 	InfoSum.sort(function(a,b){return a.amount-b.amount})
 	
 	notify="...\n"+notify+"\n"
 	for(let i=0;i<InfoSum.length;i++){
-		if(InfoSum[i].amount>=10)
+		if(Math.abs(InfoSum[i].amount)>=10)
 			notify=InfoSum[i].amount+" "+InfoSum[i].eventMassage+"\n"+notify
 	}
 	let name=""
@@ -319,7 +318,7 @@ function Bean_Info(QLS,n,m){
 	// 	name=envs[m-1].remarks
 	// else
 		name=GetName(envs[m-1].value)
-	return "-----【"+name+"】-----\n"+"★今日收入："+increase+"\n"+"☆今日支出："+Math.abs(decrease)+"\n--------------------------------\n\n"+notify
+	return "-------【"+name+"】-------\n"+"★收入："+increase+"\n"+"☆支出："+Math.abs(decrease)+"\n------------------------------\n"+notify
 }
 
 function SaveJDUserName(QLS){

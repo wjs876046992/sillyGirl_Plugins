@@ -48,30 +48,39 @@ function main(){
 						msg="账号【"+GetName(envs[j].value)+"】已失效"
 					else{
 						let info=st.JD_BeanInfo(envs[j].value,days)
-						if(info==null){
+						if(!info){
 							s.reply("账号【"+GetName(envs[j].value+"】京豆数据获取失败"))
 							continue
 						}
+						//console.log(JSON.stringify(info))
 						let infosum=[]	//各项收入统计
 						let sum=0,expire=0	//总收入与过期
-						info.forEach((value, index, array)=>{
+						info.forEach(value=>{
+							value.amount=Number(value.amount)
 							//console.log(JSON.stringify(value)+"\n\n"+JSON.stringify(infosum))
-							let find=infosum.findIndex((value2, index2, array2)=>value.eventMassage==value2.eventMassage)
+							let find=infosum.findIndex(ele=>{	//找到当前收入项在收入统计infosum中的位置
+								if(value.eventMassage!=ele.eventMassage )
+								  return false
+							    return 	 (value.amount>0 &&ele.amount>0)  || (value.amount<0&&ele.amount<0) 
+							})
 							//console.log(find)
 							if(find==-1)
 								infosum.push({eventMassage:value.eventMassage,amount:Number(value.amount)})
 							else
-								infosum[find].amount+=Number(value.amount)	
+								infosum[find].amount+=value.amount
 						})
 						infosum.sort((a,b)=>b.amount-a.amount)
-						infosum.forEach((value, index, array)=>{
+						infosum.forEach(value=>{
+							console.log(JSON.stringify(value))
 							sum+=value.amount
-							if(value.amount>50)
+							if(Math.abs(value.amount)>50)
 								msg+=value.amount+" "+value.eventMassage+"\n"
-							else if(value.amount<0)
+							if(value.amount<0){
 								expire+=value.amount
+							}
 						})
-						msg="-------账号【"+GetName(envs[j].value)+"】---------\n★净收入【"+sum+"】豆\n☆过期/使用【"+expire+"】豆\n"+msg+"...\n\n"
+						msg="-------【"+GetName(envs[j].value)+"】-------\n★净收入:"+sum+"\n☆支出:"+expire
+						msg+="\n-----------------------------------\n"+msg+"...\n\n"
 						bind.splice(k,1)//将已通知的pin从bind删除，以免重复通知			
 					}
 					s.reply(msg)
