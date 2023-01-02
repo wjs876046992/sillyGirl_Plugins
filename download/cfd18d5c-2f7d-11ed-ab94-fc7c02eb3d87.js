@@ -197,21 +197,21 @@ function QLS(){
 		return null
 	else
 		QLS=JSON.parse(data)
-	QLS.forEach(ql=>{
+	QLS.forEach((ql,i)=>{
 		if(ql.token){
 			let envs=Get_QL_Envs(ql.host,ql.token)	//检测token是否失效
 			if(!envs){
 				console.log("更新容器"+ql.name+"token")
-				ql.token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
+				QLS[i].token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
 				updated=true
 			}
 		}
 		else{
 			console.log("创建容器"+ql.name+"token")
-			ql.token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
+			QLS[i].token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
 			updated=true
 		}
-		if(!ql.token){
+		if(!QLS[i].token){
 			console.log(ql.name+"token获取失败,请检测青龙管理容器是否配置错误\n")
 			return null
 		}
