@@ -244,12 +244,16 @@ function main() {
 
 	else if(msg=="天王盖地虎"){
 		let data=db.get("spy_targets_new")
-		if(data=="")
+		if(!data)
 			targets=[]
 		else
 			targets=JSON.parse(data)
-		if(targets.findIndex(value=>value.id==s.getChatId) != -1){
-			targets.push({name:s.getChatId(),id:s.getChatId()})
+		
+		if(!targets.find(value=>value.id==s.getChatId()||value.id==s.getUserId())){
+			if(s.getChatId())
+				targets.push({name:s.getChatId(),id:s.getChatId()})
+			else
+				targets.push({name:s.getUserId(),id:s.getUserId()})
 			db.set("spy_targets_new",JSON.stringify(targets))
 			s.reply("宝塔镇河妖")
 		}
@@ -1412,8 +1416,8 @@ function Print_SpyMenu(Listens, silent, targets) {
 		else
 			notify += "【" + targets[i].id + "】"
 	}
-	notify+="\n------------------------\n"
-	notify+="[-删除][0增加][u返回]"
+	notify+="\n--------------------------------\n"
+	notify+="[-删除][0增加][wq保存][q退出]"
 	s.reply(notify)
 }
 
@@ -1479,6 +1483,8 @@ function Print_SpyItem(spy, QLS) {
 	else
 		notify += "5、开启禁用\n"
 	notify += "6、青龙任务限制时长：" + spy.Interval + "分钟\n"
+	notify+="------------------------\n"
+	notify+="[u返回][wq保存][q退出]"
 	s.reply(notify)
 }
 
@@ -1488,7 +1494,7 @@ function Print_SpyTran(trans) {
 	for (let i = 0; i < trans.length; i++)
 		notify += (i + 1) + "、" + trans[i].name + ":" + trans[i].ori + "-->" + trans[i].redi + "\n"
 	notify+="------------------------\n"
-	notify+="[-删除][u返回]"
+	notify+="[-删除][0增加][u返回]"
 	s.reply(notify)
 }
 
@@ -1501,7 +1507,7 @@ function Print_SpyUrl(decodes) {
 			notify += decodes[i].trans[j].ori + "-->" + decodes[i].trans[j].redi + "\n"
 	}
 	notify+="------------------------\n"
-	notify+="[-删除][u返回]"
+	notify+="[-删除][0增加][u返回]"
 	s.reply(notify)
 }
 
