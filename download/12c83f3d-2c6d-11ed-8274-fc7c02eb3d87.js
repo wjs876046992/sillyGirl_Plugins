@@ -294,7 +294,7 @@ function Bean_Info(QLS,n,m){
 			let index=InfoSum.findIndex(ele=>{	//找到当前收入项在收入统计InfoSum中的位置（区别正负）
 				if(ele.eventMassage!=info[i].eventMassage)
 					return false
-				return (ele.amount>0 && info.amount>0)||(ele.amount<0 && info.amount<0)
+				return (ele.amount>0 && info[i].amount>0)||(ele.amount<0 && info[1].amount<0)
 			})
 			info[i].amount>0?increase+=info[i].amount:decrease+=info[i].amount
 			if(latest-->0){//记录最近latest项收入
@@ -318,7 +318,7 @@ function Bean_Info(QLS,n,m){
 	// 	name=envs[m-1].remarks
 	// else
 		name=GetName(envs[m-1].value)
-	return "-------【"+name+"】-------\n"+"★收入："+increase+"\n"+"☆支出："+Math.abs(decrease)+"\n------------------------------\n"+notify
+	return "-------【"+name+"】-------\n"+"★收入："+increase+"\n"+"☆支出："+Math.abs(decrease)+"\n-----------------------------------\n"+notify
 }
 
 function SaveJDUserName(QLS){

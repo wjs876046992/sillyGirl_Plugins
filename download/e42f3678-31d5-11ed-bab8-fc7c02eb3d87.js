@@ -79,8 +79,7 @@ function main(){
 								expire+=value.amount
 							}
 						})
-						msg="-------【"+GetName(envs[j].value)+"】-------\n★净收入:"+sum+"\n☆支出:"+expire
-						msg+="\n-----------------------------------\n"+msg+"...\n\n"
+						msg="-------【"+GetName(envs[j].value)+"】-------\n★净收入:"+sum+"\n☆支出:"+expire+"\n-----------------------------------\n"+msg+"...\n\n"
 						bind.splice(k,1)//将已通知的pin从bind删除，以免重复通知			
 					}
 					s.reply(msg)

@@ -211,8 +211,10 @@ function QLS(){
 			ql.token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
 			updated=true
 		}
-		if(!ql.token)
+		if(!ql.token){
 			console.log(ql.name+"token获取失败,请检测青龙管理容器是否配置错误\n")
+			return null
+		}
 	})
 	if(updated)
 		db.set("QLS",JSON.stringify(QLS))

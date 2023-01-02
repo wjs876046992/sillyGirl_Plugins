@@ -243,7 +243,7 @@ function JD_BeanInfo(ck,days){
 	let flag=false //接口切换
 	let page=1	//京豆收入页
 	let info=[]  //每一项收入活动详情
-	let limit=50 //死循环保险
+	let limit=100 //死循环保险
 	let data=null //网络请求数据
 	let day=""  //临时变量，用于记录当前记录到哪一天的京豆数据
 	while(!stop){
