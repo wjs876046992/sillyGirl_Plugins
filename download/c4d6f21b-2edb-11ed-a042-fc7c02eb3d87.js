@@ -953,7 +953,7 @@ function Urls_Decode(urls) {
 	let envs = []//记录urls中提取的变量
 	for (let i = 0; i < urls.length; i++) {
 		let spy = []	//解析结果
-		let tip=""
+		//let tip=""
 		//使用自定义解析规则尝试解析
 		let data = db.get("spy_urldecode_new")
 		if (data) {
@@ -963,15 +963,15 @@ function Urls_Decode(urls) {
 		if(spy.length==0){//未能根据自定义解析规则解析出变量，使用内置解析规则
 			spy = DecodeUrl(urls[i], UrlDecodeRule)
 			if(spy.length==0){
-				tip = "未解析到变量\n"
+				notify += "未解析到变量\n"
 				continue
 			}
 			else{
-				tip ="--使用内置解析规则\n"
+				notify+="解析成功(内置规则):\n"
 			}
 		}
 		else{
-			tip="--使用自定义链接解析规则\n"
+			notify+="解析成功(自定义规则):\n"
 		}
 		spy.forEach(ele=>{
 			let temp=""
@@ -985,9 +985,8 @@ function Urls_Decode(urls) {
 				envs.push({name:ele.name,value:ele.value})
 			}
 		})
-		notify+=tip
 	}
-	console.log(JSON.stringify(envs))
+	//console.log(JSON.stringify(envs))
 	if (envs.length ||s.isAdmin()){
 		Env_Listen(envs)
 		Notify(notify)//变量解析通知，不需要自行注释
@@ -1243,7 +1242,7 @@ function DecodeUrl(url, urldecodes) {
 						temp["value"] = actid[0]
 					}
 					else{
-						console.log("未找到活动id")
+						console.log(url+"\n中未找到活动参数:"+urldecodes[i].trans[j].ori)
 						break
 					}
 				}
