@@ -11,12 +11,9 @@
 */
 
 /***********配置************ */
-//青龙面板地址
-const Host="http://192.168.31.2:6700"
-//青龙应用id
-const CilentID="a_HXgcCWf0AC"
-//青龙应用密钥
-const CilentSecrect="Fj6Po7bF7N7eVAcBknx1x2-S"
+//青龙面板地址:set elm host http://192.168.31.2:6700
+//青龙应用id:set elm client_id aaaaaa
+//青龙应用密钥:set elm client_secret AAAAAAAAAA
 
 //饿了么变量名
 const EnvName="elmCookie"
@@ -36,19 +33,35 @@ elm_bind 饿了么ID [{imtype:qq/wx/tg,id:id}]
 const s = sender 
 const ql=require("qinglong")
 const db=new Bucket("elm_bind")
+const elm=new Bucket("elm")
 
+const Host=elm.get("host")
+//青龙应用id
+const CilentID=elm.get("client_id")
+//青龙应用密钥
+const CilentSecret=elm.get("client_secret")
 function main(){
     if(!s.isAdmin() && s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
         console.log("非白名单群聊，禁止使用")
         return
     }
 
-    let token=ql.Get_QL_Token(Host,CilentID,CilentSecrect)
-    if(!token){
-        s.reply("token获取失败")
-        return
-    }
+    let temp=elm.get("token")
+    let token=null
+    if(temp)
+        token=JSON.parse(temp)
     let envs=ql.Get_QL_Envs(Host,token)
+    if(!envs){
+        token=ql.Get_QL_Token(Host,CilentID,CilentSecret)
+        if(token){
+            envs=ql.Get_QL_Envs(Host,token)
+            elm.set("token",JSON.stringify(token))
+        }
+        else{
+            console.log("token failed")
+            return
+        }
+    }
     if(!envs){
         s.reply("青龙变量获取失败")
         return
@@ -122,7 +135,7 @@ function main(){
             }
         }
         if(!find){
-            if(ql.Add_QL_Env(Host,token,[{
+            if(ql.Add_QL_Envs(Host,token,[{
                     name:EnvName,
                     value:ck,
                     remarks:s.getPlatform()+":"+s.getUserId()

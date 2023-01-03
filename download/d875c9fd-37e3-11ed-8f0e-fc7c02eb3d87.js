@@ -11,19 +11,24 @@
 * @admin true
 */
 
-/***********配置填写************* */
-//qbittorent ip及端口，例:http://192.168.31.1:8090
-const host="http://127.0.0.1:8080"
-//qbittorent登陆用户名
-const uname="admin"
-//qbittorent登陆密码
-const pwd="adminadmin"
+/***********配置************* */
+//qbittorent ip及端口，set qbittorent host http://127.0.0.1:8080
+
+//qbittorent登陆用户名:set qbittorent username admin
+
+//qbittorent登陆密码:set qbittorent password adminadmin
+
 /******************************* */
 
 
 
+const s = sender
+
 function main(){
-    const s = sender
+    const qb=new Bucket("qbittorent")
+    const host=qb.get("host")
+    const uname=qb.get("username")
+    const pwd=qb.get("password")
     let ck=Login(host,uname,pwd)
     if(ck==null){
         s.reply("登陆失败")

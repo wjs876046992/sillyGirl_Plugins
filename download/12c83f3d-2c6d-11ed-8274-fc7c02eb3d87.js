@@ -15,7 +15,7 @@
 * @rule raw 豆\s[\d]+\s[\d]+
 * @rule 保存昵称
 * @rule ck去重
-* @rule raw 获取\S+昵称
+* @rule raw 查询\S+
 * @rule raw 查找\s\S+
 * @rule 查绑 ?
  * @public false
@@ -55,7 +55,7 @@
 例：豆 2 1，多容器使用，查看容器2账号1的京豆今日收入详情
 
 获取指定pin对应的昵称
-例：获取jd_sdaf234dsf昵称
+例：查询jd_sdaf234dsf
 
 查找京东昵称对应账号pin值及其所在容器位置
 例：查找张三
@@ -142,7 +142,10 @@ function main(){
 			s.reply(Bean_Info(QLS,params[1],params[2]))
 		else{//单容器
 			let param=msg.match(/\d+/)
-			s.reply(Bean_Info(QLS,1,param))
+			if(param)
+				s.reply(Bean_Info(QLS,1,param[0]))
+			else
+				s.reply("非数字！")
 		}
 	}
 	

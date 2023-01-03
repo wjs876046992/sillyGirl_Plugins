@@ -55,67 +55,64 @@ module.exports = {
 	Modify_QL_Config
 }
 
-
+//使用样例
 function Sample(){
-	let host=""
-	let token=""
-
-/*	let QLS=JSON.parse((new Bucket("qinglong").get("QLS")))
+	let data=null
+	let QLS=JSON.parse((new Bucket("qinglong").get("QLS")))
 	let host=QLS[0].host
 	let client_id=QLS[0].client_id
 	let client_secret=QLS[0].client_secret
-//	s.reply(host)*/
-//	s.reply(JSON.stringify(Get_QL_Token(host,client_id,client_secret)))
-//	s.reply(Get_QL_Version(host,token))
-//	let login=QL_Login(host,"username","passsword")
-//	s.reply("login:"+login)
+
+
+	// let token=Get_QL_Token(host,client_id,client_secret)
+	// data=Get_QL_Version(host,token)
+	// let login=QL_Login(host,"username","passsword")
 	
-//	s.reply(JSON.stringify(Get_QL_SeqLogClear(host,token)))
-	
-//
-//	s.reply(JSON.stringify(Get_QL_Scripts(host,token)[2].children[0]))
-//	s.reply(Get_QL_Script(host,token,"KingRan_KR","root.json"))
-//	s.reply(Add_QL_Script(host,token,"测试.js","","hello word",""))
-//	s.reply(Update_QL_Script(host,token,"测试.js","","你好"))
-//	s.reply(Delete_QL_Script(host,token,"测试.js",""))
-//	s.reply(Task_QL_Script(host,token,"jd_CheckCK.js","KingRan_KR"))
-//	sleep(15*1000)
-//	s.reply(Stop_QL_Script(host,token,"jd_CheckCK.js","KingRan_KR"))
+	// data=Get_QL_SeqLogClear(host,token)
 	
 
+	// data=Get_QL_Scripts(host,token)[2].children[0]
+	// data=Get_QL_Script(host,token,"KingRan_KR","root.json")
+	// data=Add_QL_Script(host,token,"测试.js","","hello word","")
+	// data=Update_QL_Script(host,token,"测试.js","","你好")
+	// data=Delete_QL_Script(host,token,"测试.js","")
+	// data=Task_QL_Script(host,token,"jd_CheckCK.js","KingRan_KR")
+	// data=Stop_QL_Script(host,token,"jd_CheckCK.js","KingRan_KR")
+	
+	// let envs=Get_QL_Envs(host,token)
+	// data=envs[0]	
+	// data=Add_QL_Envs(host,token,[{"name":"Test","value":"值","remarks":"备注1"}])
+	// data=Update_QL_Env(host,token,"9gDpadTPLRM1rBoK","Test2","value2","remark2")
+	// data=Move_QL_Env(host,token,"9gDpadTPLRM1rBoK",65,60)
+	// data=Get_QL_Env(host,token,"9gDpadTPLRM1rBoK")
+	// data=Delete_QL_Envs(host,token,["9gDpadTPLRM1rBoK"])
+	// data=Disable_QL_Envs(host,token,["NVgvoIAzhPhPwU8n"])
+	// data=Enable_QL_Envs(host,token,["NVgvoIAzhPhPwU8n"])
 
-//	let envs=Get_QL_Envs(host,token)
-//	s.reply(JSON.stringify(envs[65]))	
-//	s.reply(JSON.stringify(Add_QL_Env(host,token,[{"name":"Test","value":"值","remarks":"备注1"}])))
-//	s.reply(JSON.stringify(Update_QL_Env(host,token,"9gDpadTPLRM1rBoK","Test2","value2","remark2")))
-//	s.reply(JSON.stringify(Move_QL_Env(host,token,"9gDpadTPLRM1rBoK",65,60)))
-//	s.reply(JSON.stringify(Get_QL_Env(host,token,"9gDpadTPLRM1rBoK")))
-//	s.reply(Delete_QL_Envs(host,token,["9gDpadTPLRM1rBoK"]))
-//	s.reply(Disable_QL_Envs(host,token,["NVgvoIAzhPhPwU8n"]))
-//	s.reply(Enable_QL_Envs(host,token,["NVgvoIAzhPhPwU8n"]))
+	// data=Get_QL_Configs(host,token)
+	// data=Get_QL_Config(host,token,"extra.sh")
+	// data=Update_QL_Config(host,token,"extra.sh","Hello")
 
-//	s.reply(JSON.stringify(Get_QL_Configs(host,token)))
-//	s.reply(Get_QL_Config(host,token,"extra.sh"))
-//	s.reply(Update_QL_Config(host,token,"extra.sh","Hello"))
-
-/*	let logs=Get_QL_Logs(host,token)
-	s.reply(JSON.stringify(logs[1].files))
-	s.reply(Get_QL_Log(host,token,logs[1].name,logs[1].files[0]))*/
+	// let logs=Get_QL_Logs(host,token)
+	// data=logs[1].files
+	// data=Get_QL_Log(host,token,logs[1].name,logs[1].files[0])
 		
-//	s.reply(JSON.stringify(Get_QL_Crons(host,token)[30]))
-//	s.reply(JSON.stringify(Add_QL_Cron(host,token,"测试任务","task hello.py","1 2 1 1 1")))
-//	s.reply("改:\n"+JSON.stringify(Update_QL_Cron(host,token,"iBKdVkntztpWOJmZ","测试任务","task hello.py2","1 4 1 1 1")))
+	// data=Get_QL_Crons(host,token)[30]
+	// data=Add_QL_Cron(host,token,"测试任务","task hello.py","1 2 1 1 1")
+	// data=Update_QL_Cron(host,token,"iBKdVkntztpWOJmZ","测试任务","task hello.py2","1 4 1 1 1")
 
-//	s.reply(Disable_QL_Crons(host,token,["DBPOktsB6d4S6RUn"]))
-//	s.reply(Enable_QL_Crons(host,token,["DBPOktsB6d4S6RUn"]))
-//	s.reply(Pin_QL_Crons(host,token,["DBPOktsB6d4S6RUn"]))
-//	s.reply(Unpin_QL_Crons(host,token,["DBPOktsB6d4S6RUn"]))
-//	s.reply(Get_QL_CronImport(host.token))
-//	s.reply(Start_QL_Crons(host,token,["aZTfc0tRFD2jvPR5"]))//特务z环境保护库
-//	s.reply(Stop_QL_Crons(host,token,["aZTfc0tRFD2jvPR5"]))
-//	s.reply(Delete_QL_Crons(host,token,["tAEzGQX9Vtgk262O"]))
-//	s.reply(Get_QL_CronLog(host,token,"h08xz5tLf34v6Sgl"))
-	return
+	// data=Disable_QL_Crons(host,token,["DBPOktsB6d4S6RUn"])
+	// data=Enable_QL_Crons(host,token,["DBPOktsB6d4S6RUn"])
+	// data=Pin_QL_Crons(host,token,["DBPOktsB6d4S6RUn"])
+	// data=Unpin_QL_Crons(host,token,["DBPOktsB6d4S6RUn"])
+	// data=Get_QL_CronImport(host.token)
+	// data=Start_QL_Crons(host,token,["aZTfc0tRFD2jvPR5"])
+	// data=Stop_QL_Crons(host,token,["aZTfc0tRFD2jvPR5"])
+	// data=Delete_QL_Crons(host,token,["tAEzGQX9Vtgk262O"])
+	// data=Get_QL_CronLog(host,token,"h08xz5tLf34v6Sgl")
+	
+	console.log(data)
+	console.log(JSON.stringify(data))
 }
 
 //青龙变量name同步
@@ -201,13 +198,13 @@ function QLS(){
 		if(ql.token){
 			let envs=Get_QL_Envs(ql.host,ql.token)	//检测token是否失效
 			if(!envs){
-				console.log("更新容器"+ql.name+"token")
+				console.log(ql.name+"token疑似失效,重新获取")
 				QLS[i].token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
 				updated=true
 			}
 		}
 		else{
-			console.log("创建容器"+ql.name+"token")
+			console.log("获取"+ql.name+"token")
 			QLS[i].token=Get_QL_Token(ql.host,ql.client_id,ql.client_secret)
 			updated=true
 		}
@@ -319,24 +316,6 @@ function Add_QL_Envs(host,token,envs){
 			dataType: "application/json"
 		})
 		return JSON.parse(data.body).data	
-	}
-	catch(err){
-		return null
-	}
-}
-
-//搜索青龙中含keyword的定时任务
-function Search_QL_Crons(host,token,keyword){
-	try{
-		let data=request({
-			url:host+"/open/crons?searchValue="+keyword,
-			method:"get",
-			headers:{
-				accept: "application/json",
-				Authorization:token.token_type+" "+token.token
-			}
-		})
-		return JSON.parse(data.body).data
 	}
 	catch(err){
 		return null
@@ -576,6 +555,25 @@ function Get_QL_Crons(host,token){
 			return data.data
 		else
 			return data
+	}
+	catch(err){
+		return null
+	}
+}
+
+
+//搜索青龙中含keyword的定时任务
+function Search_QL_Crons(host,token,keyword){
+	try{
+		let data=request({
+			url:host+"/open/crons?searchValue="+keyword,
+			method:"get",
+			headers:{
+				accept: "application/json",
+				Authorization:token.token_type+" "+token.token
+			}
+		})
+		return JSON.parse(data.body).data
 	}
 	catch(err){
 		return null
