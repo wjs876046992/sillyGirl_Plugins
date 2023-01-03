@@ -152,8 +152,8 @@ function main(){
 	else if(msg=="保存昵称")
 		s.reply(SaveJDUserName(QLS))
 
-	else if(msg.indexOf("获取")!=-1){
-		GetJDKickName(QLS,msg.match(/(?<=获取)\S+(?=昵称)/)[0])
+	else if(msg.indexOf("查询")!=-1){
+		GetJDKickName(QLS,msg.match(/(?<=查询)\S+/)[0])
 	}
 	
 	else if(msg.indexOf("查找")!=-1)

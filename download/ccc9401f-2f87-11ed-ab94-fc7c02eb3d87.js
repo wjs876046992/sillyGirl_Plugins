@@ -51,9 +51,10 @@ function main(){
 		}
 		for(j=0;j<envs.length;j++){
 			if(envs[j].name=="JD_COOKIE"){
+				let pin=envs[j].value.match(/(?<=pin=)[^;]+/)[0]
 				let redpackets_data=st.JD_RedPacket(envs[j].value)
 				let expirebean=st.JD_ExpireBean(envs[j].value)
-				if(redpackets_data!=null&&expirebean!=null){
+//				if(redpackets_data!=null&&expirebean!=null){
 /*					let redpackets=redpackets_data.redList;console.log(redpackets_data)
 					let overdue=0//过期红包金额统计
 					for(k=0;k<redpackets.length;k++){
@@ -63,12 +64,23 @@ function main(){
 					}console.log(overdue)*/
 					
 					let exbeans=0//过期京豆统计
-					expirebean.forEach(value=>exbeans+=value.expireamount)
-					if(!redpackets_data.expiredBalance)
-						redpackets_data.expiredBalance=0
+					if(expirebean)
+						expirebean.forEach(value=>exbeans+=Number(value.expireamount))
+					else
+						console.log(pin+"过期京豆数据获取失败")
+					
+					let exredpacket=0
+					if(redpackets_data){
+						if(redpackets_data.expiredBalance)
+							exredpacket=Number(redpackets_data.expiredBalance)
+						else
+							exredpacket=0
+					}
+					else{
+						console.log(pin+"过期红包数据获取失败")
+					}
 					//console.log(envs[j].value+"\n"+redpackets_data.expiredBalance+"\n"+exbeans)
-					if(exbeans/100+Number(redpackets_data.expiredBalance)>=NUM){
-						let pin=envs[j].value.match(/(?<=pin=)[^;]+/)[0]
+					if(exbeans/100+exredpacket>=NUM){
 						let tip="温馨提醒，您的账号【"+GetName(envs[j].value)+"】有"
 						tip+=redpackets_data.expiredBalance+"元红包与"+exbeans+"京豆将于近期过期"
 						console.log(pin+tip)
@@ -79,10 +91,7 @@ function main(){
 							sleep(Math.random()*10000+10000)
 						}
 					}
-				}
-				else
-					console.log(envs[j].value+"数据获取失败")
-				sleep(500)
+				sleep(Math.random() * 10+5)
 			}
 		}
 	}

@@ -29,14 +29,31 @@ function main(){
     const host=qb.get("host")
     const uname=qb.get("username")
     const pwd=qb.get("password")
-    let ck=Login(host,uname,pwd)
-    if(ck==null){
-        s.reply("登陆失败")
+    if(!host || !uname || !pwd){
+        let tip="请使用命令'set qbittorent host ip:端口'设置qb面板地址"
+        tip+="请使用命令'set qbittorent username 账号'设置qb面板登录账号"
+        tip+="请使用命令'set qbittorent password 账号'设置qb面板登录账号"
+    }
+    let ck=qb.get("cookie")
+    let data=[]
+    if(ck){
+        data=Get_AllTorr(host,ck)
+        if(!data){
+            ck=Login(host,uname,pwd)
+            qb.set("cookie",ck)
+        }
+    }
+    else{
+        ck=Login(host,uname,pwd)
+        data=Get_AllTorr(host,ck)
+        qb.set("cookie",ck)
+    }
+    if(!ck){
+        s.reply("登陆失败,请检查账号与密码是否设置正确")
         return
     }
     //console.log(ck)
     if(s.getContent()=="查看下载"){
-        let data=Get_AllTorr(host,ck)
         let notify="序号 任务名 资源大小 下载进度 速率 状态\n----------------------------------\n"
         let display_state=["downloading","pausedDL","queuedDL","stalledDL","metaDL","error"]
         //console.log(JSON.stringify(data))

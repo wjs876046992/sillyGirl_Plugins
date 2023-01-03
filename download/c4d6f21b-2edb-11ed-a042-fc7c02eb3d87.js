@@ -41,15 +41,16 @@
 导出白眼：选择一次性导出项数过多时可能会导出失败，建议选择10项左右
 
 导入白眼数据：
-将导出的信息发送给机器人即可，会默认仅添加自己没有监控的变量的任务，如果信息中容器非本人容器，将会默认使添加的监控任务使用傻妞所绑定的所有非禁用容器作为作用容器
+将导出的信息发送给机器人即可，会默认仅添加自己没有监控的变量的任务
+并把傻妞所绑定的所有非禁用容器作为作用容器
 
 监控状态：
 查看监控任务的未完成任务数量、已完成任务数量、以及上次任务时间
 
 其他：出现奇奇怪怪的不运行的情况可以使用‘清空监控队列’或者‘清空监控记录’命令进行重置
 
-插件中可能需要区分的名称：监控任务名称，自定义变量转换名称，自定义链接解析名称，青龙任务名称、以及内置的链接解析的名称
-插件最后为内置解析规则，同自定义解析规则，可自行添加
+插件中可能需要区分的名称：监控任务名称，自定义变量转换规则名称，自定义链接解析规则名称，青龙任务名称、以及内置的链接解析规则的名称
+插件最后为内置解析规则，自定义解析规则类似(但残废，仅可添加简单规则)
 */
 
 /*****************配置***************************/
@@ -78,10 +79,10 @@ const SPY=true
 
 const NotifyMode=false
 
-//监控目标黑名单，用于隔绝群内某些不想监控的账号
+//监控目标黑名单，用于屏蔽群内某些不想监控的账号
 const BlackList=["162726413","5036494307"]
 
-//口令关键词黑名单,用于隔绝某些不想监控的口令，仅对非管理员起效
+//口令关键词黑名单,用于屏蔽某些不想监控的口令，仅对非管理员起效
 const JDCodeBlackList=["炸年兽","年夜饭"]
 /************************************************/
 
@@ -153,7 +154,7 @@ jd_cookie spy_urldecode_new：链接解析规则
 	trans:[
 		{
 			ori:"a b",	//必需，url中需要提取的参数的参数名（若使用整段url作为变量值，则本项为-1；若需提取多个参数值作为变量值，则参数名间以一个空格隔开,并在sep项填入分割符）
-			redi:"AB",	//必需，提取的参数使用的变量名
+			redi:"0",	//可选，提取的参数使用的变量名，无本项时或者本项为0时仅输出提取的变量值
 			sep:"_"		//可选，当需要提取url中多个参数值作为一个变量值时，各个不同参数值间所使用的分割符
 		},
 		{
@@ -165,8 +166,8 @@ jd_cookie spy_urldecode_new：链接解析规则
 	name:测试规则 	//备注名称
 }
 将会得到如下解析结果
-export AB="1111_2222"
-export C="3333"
+【测试规则(仅管理员可用)】1111_2222
+【测试规则(仅管理员可用)】export C="3333"
 */
 
 const ql=require("qinglong")
@@ -289,8 +290,8 @@ function main() {
 }
 
 function Spy_Manager() {
-	const LIMIT = 24//循环次数限制，防止意外死循环
-	const WAIT = 60 * 1000//输入等待时间
+	const LIMIT = 40	//循环次数限制，防止意外死循环
+	const WAIT = 60 * 1000	//输入等待时间
 	let data1 = db.get("env_listens_new")
 	let silent = db.get("spy_silent_new")
 	let data2 = db.get("spy_targets_new")
@@ -447,7 +448,7 @@ function Spy_Manager() {
 						decode.keyword = s.listen(WAIT).getContent()
 						s.reply("请输入您想提取的该类型链接中的参数名（例如:http://...../?actid=xxx 中的actid,若使用整段链接作为变量请输入-1)")
 						decode.trans[0].ori = s.listen(WAIT).getContent()
-						s.reply("请输入使用该参数值作为变量值的变量名：")
+						s.reply("请输入使用该参数值作为变量值的变量名(若仅需提取参数无变量值,请输入0)：")
 						decode.trans[0].redi = s.listen(WAIT).getContent()
 						s.reply("请选择该解析规则是否仅管理员可用，输入“是”或“否”")
 						decode.admin=s.listen(WAIT).getContent()=="是"?true:false
@@ -951,32 +952,42 @@ function Urls_Decode(urls) {
 	let notify = ""
 	let envs = []//记录urls中提取的变量
 	for (let i = 0; i < urls.length; i++) {
-		let spy = []
+		let spy = []	//解析结果
+		let tip=""
 		//使用自定义解析规则尝试解析
 		let data = db.get("spy_urldecode_new")
-		if (data != "") {
+		if (data) {
 			let urldecodes = JSON.parse(data)
 			spy = DecodeUrl(urls[i], urldecodes)
 		}
 		if(spy.length==0){//未能根据自定义解析规则解析出变量，使用内置解析规则
 			spy = DecodeUrl(urls[i], UrlDecodeRule)
 			if(spy.length==0){
-				notify += "未解析到变量\n"
+				tip = "未解析到变量\n"
 				continue
 			}
-			else{			
-				notify+=st.ToEasyCopy(s.getPlatform(),spy[i].act,"export " + spy[i].name + "=\"" + spy[i].value + "\"")+"\n\n"
-				notify+="--使用内置解析规则\n"
-				envs.push({name:spy[i].name,value:spy[i].value})
+			else{
+				tip ="--使用内置解析规则\n"
 			}
 		}
 		else{
-			notify+=st.ToEasyCopy(s.getPlatform(),spy[i].act,"export " + spy[i].name + "=\"" + spy[i].value + "\"")+"\n\n"
-			notify+="--使用自定义链接解析规则\n"
-			envs.push({name:spy[i].name,value:spy[i].value})
+			tip="--使用自定义链接解析规则\n"
 		}
+		spy.forEach(ele=>{
+			let temp=""
+			if(!ele.name ||ele.name=="0"){	//未设置解析变量名时，仅输出活动名与变量值
+				temp=ele.value
+				notify+=st.ToEasyCopy(s.getPlatform(),ele.act,temp)+"\n"
+			}
+			else{
+				temp="export " + ele.name + "=\"" + ele.value + "\""
+				notify+=st.ToEasyCopy(s.getPlatform(),ele.act,temp)+"\n"
+				envs.push({name:ele.name,value:ele.value})
+			}
+		})
+		notify+=tip
 	}
-	//console.log(JSON.stringify(envs))
+	console.log(JSON.stringify(envs))
 	if (envs.length ||s.isAdmin()){
 		Env_Listen(envs)
 		Notify(notify)//变量解析通知，不需要自行注释
@@ -1188,8 +1199,9 @@ function Que_Manager(QLS) {
 
 
 //根据配置urldecodes尝试解析url
-function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
-	let spy = []//解析结果：[{name:监控变量名,value:监控变量值,act:活动任务名}]
+function DecodeUrl(url, urldecodes) {
+	//console.log(url+"\n"+url.length)
+	let spy = []//解析结果：[{name:监控变量名,value:监控变量值,act:备注名}]
 	for (let i = 0; i < urldecodes.length; i++) {
 		if (url.match(urldecodes[i].keyword)) {
 			if(urldecodes[i].admin && !s.isAdmin()){
@@ -1202,7 +1214,7 @@ function DecodeUrl(url, urldecodes) {//console.log(url+"\n"+url.length)
 					name: urldecodes[i].trans[j].redi
 				}
 				if(urldecodes[i].admin)
-					temp.act+="-仅管理员可用"
+					temp.act+="(仅管理员可用)"
 				if (urldecodes[i].trans[j].ori == -1) {//使用整段url作为变量
 					temp["value"] = url
 				}
@@ -1353,10 +1365,11 @@ function ClearHistory(Listens) {
 //检查消息源是否监控目标
 function IsTarget() {
 	try {
-		let uid = s.getUserId(),cid=s.getChatId()
+		let uid = s.getUserId(),cid = s.getChatId()
 		if(BlackList.indexOf(uid)!=-1)
 			return false
-		let tgbotid=(new Bucket("tg")).get("token").split(":")[0]//不解析来自机器人的消息,防止tg人形与机器人互相解析
+		let tgbot_token=(new Bucket("tg")).get("token")
+		let tgbotid=tgbot_token?tgbot_token.split(":")[0]:0	//不监控来自机器人的消息,防止tg人形与机器人互相解析
 		let data=db.get("spy_targets_new")
 		let targets = data?JSON.parse(data):[]
 		for (let i = 0; i < targets.length; i++){
@@ -1515,6 +1528,7 @@ function Print_SpyItem(spy, QLS) {
 //打印监控菜单-变量转换页面
 function Print_SpyTran(trans) {
 	let notify = "请选择添加或者删除变量转换规则：\n"
+	notify+="(注:仅提供简单的变换功能,即变量a-->变量b)\n"
 	for (let i = 0; i < trans.length; i++)
 		notify += (i + 1) + "、" + trans[i].name + ":" + trans[i].ori + "-->" + trans[i].redi + "\n"
 	notify+="------------------------\n"
@@ -1525,10 +1539,11 @@ function Print_SpyTran(trans) {
 //打印监控菜单-链接解析页面
 function Print_SpyUrl(decodes) {
 	let notify = "请选择添加或者删除链接解析规则：\n"
+	notify+="(注:当内置规则解析失败时可添加自定义规则,仅提供简单的自定义规则,强大规则请参考插件注释于内置规则中添加)"
 	for (let i = 0; i < decodes.length; i++) {
 		notify += (i + 1) + "、" + decodes[i].name
 		if(decodes[i].admin)
-			notify+="(仅管理员可用)\n" 
+			notify+="(仅管理员可用)" 
 		notify += "\n" + decodes[i].keyword + " :\n"
 		for (let j = 0; j < decodes[i].trans.length; j++)
 			notify += decodes[i].trans[j].ori + "-->" + decodes[i].trans[j].redi + "\n"
@@ -1548,7 +1563,7 @@ var UrlDecodeRule =[
 			trans:[
 				{
 					ori:"a b",
-					redi:"AB",
+					redi:"0",
 					sep:"_"
 				},
 				{
