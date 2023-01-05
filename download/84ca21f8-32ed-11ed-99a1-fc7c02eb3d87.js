@@ -77,34 +77,34 @@ function GetBind(imtype,uid){
 function NotifyMasters(msg){
 	const sillyGirl=new SillyGirl()
     let qqm=(new Bucket("qq")).get("masters")
-    let ids=qqm.split("&")
-    for(let i=0;i<ids.length;i++){
-        sillyGirl.push({
+    let tgm=(new Bucket("tg")).get("masters")
+    let wxm=(new Bucket("wx")).get("masters")
+	let masters=[]	//[{ imType:xx, id: id }]
+    qqm.split("&").forEach(id=>{
+		sillyGirl.push({
              platform: "qq",
              userId: ids[i],
              content: msg
         })
-    }
-    
-    let tgm=(new Bucket("tg")).get("masters")
-    ids=tgm.split("&")
-    for(let i=0;i<ids.length;i++){
-        sillyGirl.push({
-             platform: "tg",
+		masters.push({imType: "qq", id: id })
+	})
+    tgm.split("&").forEach(id=>{
+		sillyGirl.push({
+             platform: "qq",
              userId: ids[i],
              content: msg
         })
-    }
-    
-    let wxm=(new Bucket("wx")).get("masters")
-    ids=wxm.split("&")
-    for(let i=0;i<ids.length;i++){
-        sillyGirl.push({
-             platform: "wx",
+		masters.push({imType: "qq", id: id })
+	})
+	wxm.split("&").forEach(id=>{
+		sillyGirl.push({
+             platform: "qq",
              userId: ids[i],
              content: msg
         })
-    }
+		masters.push({imType: "qq", id: id })
+	})
+	return masters
 }
 
 //在totype平台的群cid中向绑定京东账号pin的用户通知msg
@@ -176,14 +176,22 @@ function NotifyMainKey(mainKey, isGroup, msg) {
 	let toType = dbn.keys()
 	for (let i = 0; i < toType.length; i++) {
 		let ids = dbn.get(toType[i]).split("&")
-		NotifyTo.platform = toType[i]
-		for (let j = 0; j < ids.length; j++) {
-			if (isGroup)
-				NotifyTo.groupCode = ids[j]
-			else
-				NotifyTo.userID = ids[j]
-			sillyGirl.push(NotifyTo)
-			record.push({ imType: toType[i], id: ids[j] })
+		if(toType[i]=="tg"){
+			ids.forEach(id=>{
+				SendToTG(id,msg)
+				record.push({ imType: toType[i], id: id })
+			})
+		}
+		else{
+			NotifyTo.platform = toType[i]
+			for (let j = 0; j < ids.length; j++) {
+				if (isGroup)
+					NotifyTo.groupCode = ids[j]
+				else
+					NotifyTo.userID = ids[j]
+				sillyGirl.push(NotifyTo)
+				record.push({ imType: toType[i], id: ids[j] })
+			}
 		}
 	}
 	return record
@@ -237,26 +245,29 @@ function JD_UserInfo(ck){
 //获取ck对应账号最近days天的每一项收入
 //各项收入详情[{eventMassage:活动名,amount:获得京豆数量,date:获得时间,...}]
 function JD_BeanInfo(ck,days){
+	let data=JD_BeanInfo2(ck,days)
+//	return data?data:JD_BeanInfo1(ck,days)
+	if(data)
+		return data
+	else{
+		console.log("切换查询接口")
+		return JD_BeanInfo1(ck,days)
+	}
+}
+
+function JD_BeanInfo1(ck,days){
 	let ua= USER_AGENT()
-	//console.log(ua)
-	let stop=false //循环终止，获取到所有数据后终止
-	let flag=false //接口切换
 	let page=1	//京豆收入页
-	let info=[]  //每一项收入活动详情
+	let info=[]  //每一项收入活动详情记录
 	let limit=100 //死循环保险
-	let data=null //网络请求数据
-	let day=""  //临时变量，用于记录当前记录到哪一天的京豆数据
-	while(!stop){
-		if(--limit<0){
-			console.log("查询京豆详情死循环了")
-			break	
-		}
+	let day=""  //记录前一项收入的日期，以统计记录天数
+	let count=0	//天数统计
+	while(limit-->0){
 		let body=encodeURI(JSON.stringify({
 			"pageSize": "200", 
 			"page": page.toString()
-			}
-		))
-		let options = {
+		}))
+		let data=request({
 			url: "https://api.m.jd.com/client.action?functionId=getJingBeanBalanceDetail",
 			method:"post",
 			dataType:"json",
@@ -267,61 +278,61 @@ function JD_BeanInfo(ck,days){
 				"Content-Type": "application/x-www-form-urlencoded",
 				"Cookie": ck
 			}
-		}	
-		let options2={
+		})
+		if(data.status==200 && data.body.code==0){
+			for(let i=0;i<data.body.detailList.length;i++){
+				let infoday=data.body.detailList[i].date.match(/\d+(?= )/)[0]	//收入项时间-天
+				if(day!=infoday){
+                	day=infoday
+                	if(count==days)
+						return info
+					count++
+				}
+				info.push(data.body.detailList[i])
+			}
+		}
+		else
+			return null
+		sleep(500)
+		page++
+	}
+}
+
+
+function JD_BeanInfo2(ck,days){
+	let ua= USER_AGENT()
+	let page=1	//京豆收入页
+	let info=[]  //每一项收入活动详情记录
+	let limit=100 //死循环保险
+	let day=""  //记录前一项收入的日期，以统计记录天数
+	let count=0	//天数统计
+	while(limit-->0){
+		let data=request({
 			url:"https://bean.m.jd.com/beanDetail/detail.json?page="+page,
 			dataType:"json",
 			headers:{
 				"Cookie":ck,
 				"User-Agent":ua
 			}
+		})
+		if(data.status==200 && data.body.success){
+			for(let i=0;i<data.body.jingDetailList.length;i++){
+				let infoday=data.body.jingDetailList[i].date.match(/\d+(?= )/)[0]	//收入项时间-天
+				if(day!=infoday){
+                	day=infoday
+                	if(count==days)
+						return info
+					count++
+				}
+				info.push(data.body.jingDetailList[i])
+			}
 		}
-
-		if(!flag)
-		     data=request(options);
-		let temp=[]	//获取到的每一项收入
-		try{
-			if(data.status==200 && data.body.code==0){
-				//console.log(JSON.stringify(data))
-				temp=data.body.detailList	
-			}
-			else{
-				flag=true
-				console.log("数据获取失败,更换接口2")
-				data=request(options2)
-				if(data.status==200 && data.body.success){
-					//console.log(JSON.stringify(data))
-					temp=data.body.jingDetailList	
-				}
-				else{
-					console.log(JSON.stringify(data))
-					return null
-				}
-			}
-		}catch(err){
-			console.log(err)
+		else
 			return null
-		}
-		if(temp.length){	//保存收入数据
-			for(let i=0;i< temp.length;i++){
-                let evenday=temp[i].date.match(/\d+(?= )/)[0]	//收入项时间-天
-                if(evenday!=day){
-					//console.log("详情：倒数第"+days+"天，收入："+JSON.stringify(info))
-                    day=evenday
-                    if(days--<=0){
-                        stop=true
-                        break
-                    }
-                }
-				info.push(temp[i])
-			}
-		}
 		sleep(500)
 		page++
 	}
-	return info	
 }
-
 
 //获取ck对应账号7天内过期京豆
 function JD_ExpireBean(ck){

@@ -30,9 +30,11 @@ function main(){
     const uname=qb.get("username")
     const pwd=qb.get("password")
     if(!host || !uname || !pwd){
-        let tip="请使用命令'set qbittorent host ip:端口'设置qb面板地址"
-        tip+="请使用命令'set qbittorent username 账号'设置qb面板登录账号"
-        tip+="请使用命令'set qbittorent password 账号'设置qb面板登录账号"
+        let tip="请使用命令'set qbittorent host ip:端口'设置qb面板地址\n"
+        tip+="请使用命令'set qbittorent username 账号'设置qb面板登录账号\n"
+        tip+="请使用命令'set qbittorent password 账号'设置qb面板登录账号\n"
+        s.reply(tip)
+        return
     }
     let ck=qb.get("cookie")
     let data=[]

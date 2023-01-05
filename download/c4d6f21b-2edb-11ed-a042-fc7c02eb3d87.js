@@ -19,7 +19,7 @@
 * @priority 10
  * @public false
 * @disable false
-* @version v1.3.8
+* @version v1.3.9
 */
 
 
@@ -83,7 +83,7 @@ const NotifyMode=false
 const BlackList=["162726413","5036494307"]
 
 //口令关键词黑名单,用于屏蔽某些不想监控的口令，仅对非管理员起效
-const JDCodeBlackList=["炸年兽","年夜饭"]
+const JDCodeBlackList=["炸年兽","年夜饭","队伍"]
 /************************************************/
 
 /*
@@ -112,6 +112,7 @@ const JDCodeBlackList=["炸年兽","年夜饭"]
 2022-12-05 v1.3.6 增加监控开关(关闭后将仅解析)
 2022-12-25 v1.3.7 更新qinglong模块token缓存机制
 2023-1-3 v1.3.8 更新非管理员的口令黑名单机制以及解析规则是否仅管理员可用
+2023-1-5 v1.3.9 推送排版优化
 
 
 /*****************数据存储******************/
@@ -162,7 +163,7 @@ jd_cookie spy_urldecode_new：链接解析规则
 			redi:"C"
 		}
 	],
-	admin:true,	//bool，该规则是否仅对管理员有效
+	admin:true,	//可选，bool，该规则是否仅对管理员有效,值为false时若消息来源为非管理员，将不进行解析
 	name:测试规则 	//备注名称
 }
 将会得到如下解析结果
@@ -448,7 +449,7 @@ function Spy_Manager() {
 						decode.keyword = s.listen(WAIT).getContent()
 						s.reply("请输入您想提取的该类型链接中的参数名（例如:http://...../?actid=xxx 中的actid,若使用整段链接作为变量请输入-1)")
 						decode.trans[0].ori = s.listen(WAIT).getContent()
-						s.reply("请输入使用该参数值作为变量值的变量名(若仅需提取参数无变量值,请输入0)：")
+						s.reply("请输入使用该参数值作为变量值的变量名(若仅需提取参数无需变量,请输入0)：")
 						decode.trans[0].redi = s.listen(WAIT).getContent()
 						s.reply("请选择该解析规则是否仅管理员可用，输入“是”或“否”")
 						decode.admin=s.listen(WAIT).getContent()=="是"?true:false
@@ -953,6 +954,7 @@ function Urls_Decode(urls) {
 	let envs = []//记录urls中提取的变量
 	for (let i = 0; i < urls.length; i++) {
 		let spy = []	//解析结果
+		let by=0	//解析方式
 		//let tip=""
 		//使用自定义解析规则尝试解析
 		let data = db.get("spy_urldecode_new")
@@ -960,18 +962,13 @@ function Urls_Decode(urls) {
 			let urldecodes = JSON.parse(data)
 			spy = DecodeUrl(urls[i], urldecodes)
 		}
-		if(spy.length==0){//未能根据自定义解析规则解析出变量，使用内置解析规则
+		if(spy.length)
+			by=1
+		else{//未能根据自定义解析规则解析出变量，使用内置解析规则
 			spy = DecodeUrl(urls[i], UrlDecodeRule)
-			if(spy.length==0){
-				notify += "未解析到变量\n"
-				continue
+			if(spy.length){
+				by=2
 			}
-			else{
-				notify+="解析成功(内置规则):\n"
-			}
-		}
-		else{
-			notify+="解析成功(自定义规则):\n"
 		}
 		spy.forEach(ele=>{
 			let temp=""
@@ -985,11 +982,17 @@ function Urls_Decode(urls) {
 				envs.push({name:ele.name,value:ele.value})
 			}
 		})
+		if(by==0)
+			notify += "未解析到变量\n"
+		else if(by==1)
+			notify+="--by自定义规则\n\n"
+		else if(by==2)
+			notify+="--by内置规则\n\n"
 	}
 	//console.log(JSON.stringify(envs))
 	if (envs.length ||s.isAdmin()){
 		Env_Listen(envs)
-		Notify(notify)//变量解析通知，不需要自行注释
+		Notify(notify)	//链接解析结果通知，不需要自行注释
 	}
 }
 
@@ -1198,27 +1201,27 @@ function Que_Manager(QLS) {
 
 
 //根据配置urldecodes尝试解析url
-function DecodeUrl(url, urldecodes) {
+function DecodeUrl(url, rules) {
 	//console.log(url+"\n"+url.length)
 	let spy = []//解析结果：[{name:监控变量名,value:监控变量值,act:备注名}]
-	for (let i = 0; i < urldecodes.length; i++) {
-		if (url.match(urldecodes[i].keyword)) {
-			if(urldecodes[i].admin && !s.isAdmin()){
-				console.log("规则【"+urldecodes[i].name+"】仅管理员可用")
+	for (let i = 0; i < rules.length; i++) {
+		if (url.match(rules[i].keyword)) {
+			if(rules[i].admin && !s.isAdmin()){
+				console.log("规则【"+rules[i].name+"】仅管理员可用")
 				continue
 			}
-			for (let j = 0; j < urldecodes[i].trans.length; j++) {
+			for (let j = 0; j < rules[i].trans.length; j++) {
 				let temp = {
-					act: urldecodes[i].name,
-					name: urldecodes[i].trans[j].redi
+					act: rules[i].name,
+					name: rules[i].trans[j].redi
 				}
-				if(urldecodes[i].admin)
-					temp.act+="(仅管理员可用)"
-				if (urldecodes[i].trans[j].ori == -1) {//使用整段url作为变量
+				// if(rules[i].admin)
+				// 	temp.act+="(仅管理员可用)"
+				if (rules[i].trans[j].ori == -1) {//使用整段url作为变量
 					temp["value"] = url
 				}
-				else if(urldecodes[i].trans[j].ori.indexOf(" ") !=-1){//提取多参数作为变量值
-					let pn=urldecodes[i].trans[j].ori.split(" ")
+				else if(rules[i].trans[j].ori.indexOf(" ") !=-1){//提取多参数作为变量值
+					let pn=rules[i].trans[j].ori.split(" ")
 					let pv=[]
 					pn.forEach(ele=>{
 						if(!ele)
@@ -1227,22 +1230,24 @@ function DecodeUrl(url, urldecodes) {
 						let actid=url.match(reg)
 						if(actid)
 							pv.push(actid[0])
+						else
+							console.log(url+"\n中未找到活动参数:"+ele)
 					})
 					if(!pv.length)//未找到参数
 						break
-					if(urldecodes[i].trans[j].sep)
-						temp["value"]=pv.join(urldecodes[i].trans[j].sep)
+					if(rules[i].trans[j].sep)
+						temp["value"]=pv.join(rules[i].trans[j].sep)
 					else
-						console.log("内置解析规则"+JSON.stringify(urldecodes[i])+"缺少分割符")
+						console.log("内置解析规则"+JSON.stringify(rules[i])+"缺少分割符")
 				} 
 				else {//提取参数作为变量
-					let reg = new RegExp("(?<=" + urldecodes[i].trans[j].ori + "(=|%3D))[^&%]+")
+					let reg = new RegExp("(?<=" + rules[i].trans[j].ori + "(=|%3D))[^&%]+")
 					let actid = url.match(reg)
 					if (actid) {
 						temp["value"] = actid[0]
 					}
 					else{
-						console.log(url+"\n中未找到活动参数:"+urldecodes[i].trans[j].ori)
+						console.log(url+"\n中未找到活动参数:"+rules[i].trans[j].ori)
 						break
 					}
 				}
@@ -1306,10 +1311,8 @@ function Add_Spy(oldspy, newspy) {
 
 //发送msg消息
 function Notify(msg) {
-	let imType = s.getPlatform()
-	let message = s.getContent();
 	if (db.get("spy_silent_new") != "true" || s.isAdmin()) {
-		if (imType != "tg")
+		if (s.getPlatform() != "tg")
 			s.reply(msg)
 		else {
 			if (s.getChatId() != 0){
@@ -1323,19 +1326,17 @@ function Notify(msg) {
 		}
 	}
 	else {//静默推送
-		let from = "处理来自" + s.getPlatform() + ":"
-		if (s.getChatId()) {
-			/*			if(s.getChatname()!="")
-							from+="群("+s.getChatname()+")"
-						else*/
-			from += "群(" + s.getChatId() + ")"
+		let temp="--------------------\n"
+		let gname=JSON.parse(db.get("spy_targets_new")).find(target=>target.id==s.getChatId()).name	//线报来源备注名
+		if((s.getPlatform()=="tg" || s.getPlatform()=="pgm") && s.getContent().match(/`[\s\S]*`/)){
+			temp+="【线报】"+s.getContent()+"\n\n"
 		}
-		if (s.getUsername())
-			from += "「" + s.getUsername() + "」"
-		else
-			from += "「" + s.getUserId() + "」"
-		from += "的消息\n---------------------\n" + message.slice(0, 50) + " ......\n---------------------\n\n";
-//		tgmsg=(from + tgmsg).replace(/(?<!\\)_/g,"\\_")
+		else{
+			console.log("markupdown线报")
+			temp+=st.ToEasyCopy(s.getPlatform(),"线报",s.getContent())+"\n\n"
+		}
+		temp+="【来源】"+gname+"("+s.getPlatform().toUpperCase()+")\n"
+		let from=temp+"--------------------\n\n"
 		st.NotifyMainKey("SpyNotify", false, from + msg + "\n--『白眼』")
 		st.NotifyMainKey("SpyGroupNotify", true, from + msg + "\n--『白眼』")
 	}
@@ -1538,7 +1539,7 @@ function Print_SpyTran(trans) {
 //打印监控菜单-链接解析页面
 function Print_SpyUrl(decodes) {
 	let notify = "请选择添加或者删除链接解析规则：\n"
-	notify+="(注:当内置规则解析失败时可添加自定义规则,仅提供简单的自定义规则,强大规则请参考插件注释于内置规则中添加)"
+	notify+="(注:当内置规则解析失败时可添加自定义规则,仅提供简单的自定义规则,强大规则请参考插件注释于内置规则中添加)\n"
 	for (let i = 0; i < decodes.length; i++) {
 		notify += (i + 1) + "、" + decodes[i].name
 		if(decodes[i].admin)
@@ -1570,7 +1571,7 @@ var UrlDecodeRule =[
 					redi:"C"
 				}
 			],
-			admin:true,
+//			admin:true,
 			name:"测试规则"
 		},
 		/******************KR库********************** */

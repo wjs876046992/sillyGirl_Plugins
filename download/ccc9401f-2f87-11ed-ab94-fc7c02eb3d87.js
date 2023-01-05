@@ -91,7 +91,7 @@ function main(){
 							sleep(Math.random()*10000+10000)
 						}
 					}
-				sleep(Math.random() * 10+5)
+				sleep(Math.random() * 1000+5000)
 			}
 		}
 	}

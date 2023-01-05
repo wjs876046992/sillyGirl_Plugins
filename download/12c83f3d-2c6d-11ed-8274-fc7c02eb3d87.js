@@ -16,7 +16,7 @@
 * @rule 保存昵称
 * @rule ck去重
 * @rule raw 查询\S+
-* @rule raw 查找\s\S+
+* @rule 查找 ?
 * @rule 查绑 ?
  * @public false
 * @admin true
@@ -58,7 +58,7 @@
 例：查询jd_sdaf234dsf
 
 查找京东昵称对应账号pin值及其所在容器位置
-例：查找张三
+例：查找 张三
 
 */
 
@@ -157,7 +157,7 @@ function main(){
 	}
 	
 	else if(msg.indexOf("查找")!=-1)
-		GetJDCOOKIE(QLS,msg.match(/(?<=查找\s)\S+/)[0])
+		GetJDCOOKIE(QLS,s.param(1))
 	
 	else if(msg=="ck去重")
 		s.reply(Reduce_JDCK_Repetition(QLS))
@@ -172,9 +172,19 @@ function Reduce_JDCK_Repetition(QLS){
 }
 
 function GetJDCOOKIE(QLS,kickname){
-	let tipid=s.reply("正在查找，请稍等...");//console.log(tipid)
+	console.log(kickname)
+	let tipid=s.reply("正在查找，请稍等...");
 	let notify=""
 	let find=false
+	let pinNames=(new Bucket("jd_cookie")).get("pinName")	//本地缓存昵称
+	let data=[]
+	if(pinNames)	//检查缓存昵称
+		data=JSON.parse(pinNames)
+	let temp=data.find(ele=>decodeURI(ele.pin)==kickname)
+	if(temp){
+		console.log("缓存昵称中找到"+temp.pin)
+		//kickname=temp.pin
+	}
 	for(let i=0;i<QLS.length;i++){
 		if(QLS[i].disable)
 			continue
@@ -182,25 +192,46 @@ function GetJDCOOKIE(QLS,kickname){
 		ql_host=QLS[i].host
 		ql_token=QLS[i].token
 		if(!ql_token){
-			s.reply("容器"+QLS[i].name+"token获取失败,跳过\n")
+			notify+="容器"+QLS[i].name+"token获取失败,跳过\n"
 			continue
 		}
 		
 		let envs=ql.Get_QL_Envs(ql_host,ql_token)
 		if(envs==null){
-			s.reply(QLS[i].name+"青龙变量获取失败，跳过")
+			notify+=QLS[i].name+"青龙变量获取失败，跳过"
 			continue
 		}
 		for(let j=0;j<envs.length;j++){
-			let pt_pin=envs[j].value.match(/(?<=pt_pin=)[^;]+/g)
-			if(pt_pin==null)
+			if(envs[j].name!="JD_COOKIE")
 				continue
-			let name=GetName(envs[j].value)
-			if(name==kickname){
+			let pt_pin=envs[j].value.match(/(?<=pt_pin=)[^;]+/g)[0]
+			if(decodeURI(pt_pin)==kickname){	//直接检查pin
+				console.log("pin中找到")
 				notify+="序号："+(j+1)+"\npin:"+pt_pin
 				find=true
 				break
 			}
+		}
+		if(find)
+			continue
+		
+		for(let j=0;j<envs.length;j++){	
+			if(envs[j].name!="JD_COOKIE")
+				continue
+			let pt_pin=envs[j].value.match(/(?<=pt_pin=)[^;]+/g)[0]
+			let userInfo=st.JD_UserInfo(envs[j].value)
+			if(userInfo){	//直接从京东获取到昵称
+				if(userInfo.userInfo.baseInfo.nickname==kickname){
+					console.log("京东信息中找到")
+					notify+="序号："+(j+1)+"\npin:"+pt_pin
+					find=true
+					break
+
+				}
+			}
+			else
+				console.log(pt_pin+"用户信息获取失败")
+			sleep(Math.random()*10000+3000)
 		}
 	}
 	s.recallMessage(tipid)
@@ -309,7 +340,7 @@ function Bean_Info(QLS,n,m){
 				InfoSum[index].amount+=info[i].amount
 		}
 	}	
-	InfoSum.sort(function(a,b){return a.amount-b.amount})
+	InfoSum.sort((a,b)=>a.amount-b.amount)
 	
 	notify="...\n"+notify+"\n"
 	for(let i=0;i<InfoSum.length;i++){
@@ -545,7 +576,7 @@ function Notify_JDCK_disabled(QLS){
 					notify=notify+"\n变量"+(i+1)+"【"+pin+"】\n"
 					if(toType==""){//一对一通知
 						let to=st.NotifyPin(pin,"温馨提示，您的账号【"+name+"】已过期，请重新登陆")
-						console.log(envs[i].value+"\n"+JSON.stringify(to))
+						console.log(envs[i].value+"\n失效,通知:\n"+JSON.stringify(to))
 						if(to.length!=0){
 							record.push(pin)//记录已通知pin
 							for(let k=0;k<to.length;k++)
@@ -726,25 +757,25 @@ function Find_env(envs,string){
 
 //获取ck对应账号通知时使用的称呼
 function GetName(ck){
-	let pin=ck.match(/(?<=pin=)[^;]+(?=;)/g)
-	let userInfo=st.JD_UserInfo(ck)
-	if(userInfo!=null)//直接从京东获取到昵称
-		return userInfo.userInfo.baseInfo.nickname
-	else{
-		//从保存的昵称记录中获取昵称
-		let pinNames=(new Bucket("jd_cookie")).get("pinName")
-		if(pinNames!=""){
-			let data=JSON.parse(pinNames)
-			for(let i=0;i<data.length;i++)
-				if(data[i].pin==pin)
-					return data[i].name			
-		}
-		//未在记录中找到昵称，使用pin通知
-		if(pin.indexOf("%")!=-1)
-			return decodeURI(pin) //中文pin
-		else
-			return pin
+	let pin=ck.match(/(?<=pin=)[^;]+(?=;)/g)[0]
+	//从本地缓存的昵称记录中获取昵称
+	let pinNames=(new Bucket("jd_cookie")).get("pinName")
+	if(pinNames){
+		let data=JSON.parse(pinNames)
+		for(let i=0;i<data.length;i++)
+			if(data[i].pin==pin)
+				return data[i].name			
 	}
+	else{	//从京东服务器获取昵称
+		let userInfo=st.JD_UserInfo(ck)
+			if(userInfo)//直接从京东获取到昵称
+				return userInfo.userInfo.baseInfo.nickname
+			else
+				console.log(pin+"用户信息获取失败")
+		sleep(time.random()*10000+3000)
+	}
+	//未获取到昵称，使用pin通知
+	return decodeURI(pin) //中文pin
 }
 
 

@@ -26,8 +26,10 @@ function main(){
 		s.reply("获取绑定信息失败或您未绑定本平台")
 		return
 	}
+	let notify=[]
+	let notify2=[]
 	let tipid=s.reply("正在查询,请稍等...");
-	for(let i=0;i<QLS.length;i++){
+	for(let i=0;i<QLS.length&& bind.length;i++){
 		let ql_host=QLS[i].host
 		let ql_token=QLS[i].token
 		if(!ql_token){
@@ -43,51 +45,75 @@ function main(){
 			for(let k=0;k<bind.length;k++){
 				let pin=envs[j].value.match(/(?<=pt_pin=)[^;]+/g)
 				if(pin==bind[k]){
-					let msg=""
-					if(envs[j].status==1)
-						msg="账号【"+GetName(envs[j].value)+"】已失效"
-					else{
-						let info=st.JD_BeanInfo(envs[j].value,days)
-						if(!info){
-							s.reply("账号【"+GetName(envs[j].value+"】京豆数据获取失败"))
-							continue
-						}
-						//console.log(JSON.stringify(info))
-						let infosum=[]	//各项收入统计
-						let sum=0,expire=0	//总收入与过期
-						info.forEach(value=>{
-							value.amount=Number(value.amount)
-							//console.log(JSON.stringify(value)+"\n\n"+JSON.stringify(infosum))
-							let find=infosum.findIndex(ele=>{	//找到当前收入项在收入统计infosum中的位置
-								if(value.eventMassage!=ele.eventMassage )
-								  return false
-							    return 	 (value.amount>0 &&ele.amount>0)  || (value.amount<0&&ele.amount<0) 
-							})
-							//console.log(find)
-							if(find==-1)
-								infosum.push({eventMassage:value.eventMassage,amount:Number(value.amount)})
-							else
-								infosum[find].amount+=value.amount
-						})
-						infosum.sort((a,b)=>b.amount-a.amount)
-						infosum.forEach(value=>{
-							console.log(JSON.stringify(value))
-							sum+=value.amount
-							if(Math.abs(value.amount)>50)
-								msg+=value.amount+" "+value.eventMassage+"\n"
-							if(value.amount<0){
-								expire+=value.amount
-							}
-						})
-						msg="-------【"+GetName(envs[j].value)+"】-------\n★净收入:"+sum+"\n☆支出:"+expire+"\n-----------------------------------\n"+msg+"...\n\n"
-						bind.splice(k,1)//将已通知的pin从bind删除，以免重复通知			
+					bind.splice(k,1)//将已通知的pin从bind删除，以免重复通知	
+					if(envs[j].status==1){
+						s.reply("账号【"+GetName(envs[j].value)+"】可能已失效")
+						break
 					}
-					s.reply(msg)
+					let info=st.JD_BeanInfo(envs[j].value,days)
+					if(!info){
+						s.reply("账号【"+GetName(envs[j].value+"】京豆数据获取失败"))
+						break
+					}
+					//console.log(JSON.stringify(info))
+					let infosum=[]	//各项收入统计
+					let infoday=[]	//每天收入统计
+					let sum=0,expire=0	//净收入与过期
+					info.forEach(value=>{
+						value.amount=Number(value.amount)
+						sum+=value.amount	//净收入统计
+						if(value.amount<0)	//过期与使用统计
+							expire+=value.amount
+						//各项收入项目收入统计
+						let find=infosum.findIndex(ele=>{	//找到当前收入项在收入统计infosum中的位置
+							if(value.eventMassage!=ele.eventMassage )
+								return false
+							else
+								return 	 (value.amount>0 &&ele.amount>0)  || (value.amount<0&&ele.amount<0) 
+						})
+						//console.log(find)
+						if(find==-1)
+							infosum.push({eventMassage:value.eventMassage,amount:value.amount})
+						else
+							infosum[find].amount+=value.amount
+						//每天收入统计
+						let day=value.date.split(" ")[0]
+						if(infoday.length){
+							if(infoday[infoday.length-1].date!=day)
+								infoday.push({date:day,amount:value.amount})
+							else
+								infoday[infoday.length-1].amount+=value.amount
+						}
+						else
+							infoday.push({date:day,amount:value.amount})
+					})
+					
+					let msg=""	//收入统计(活动)通知
+					let msg2="" //收入统计(天)通知
+					let temp="账号："+GetName(envs[j].value)+"\n"
+					temp+="★净收入:"+sum+"\n☆支出:"+expire+"\n"
+					temp+="---------------------------\n"
+					infosum.sort((a,b)=>b.amount-a.amount)
+					infosum.forEach(value=>{
+						if(Math.abs(value.amount)>50)	//只输出收入超过50的项目
+							msg+=value.amount+" "+value.eventMassage+"\n"
+					})	
+					notify.push(temp+"收入项目名\t\t收入数量\n---------------------------\n"+msg+"...")
+					
+					infoday.forEach(value=>{
+						msg2+=value.date+ " "+value.amount+"\n"
+					})
+					notify2.push(temp+"日期\t\t收入数量\n---------------------------\n"+msg2)
 					sleep(2000)
 					break
 				}
 			}
 		}		
+	}
+	notify.forEach(msg=>s.reply(msg))
+	let inp=s.listen(20000)
+	if(inp){
+		notify2.forEach(msg=>s.reply(msg))
 	}
 }
 

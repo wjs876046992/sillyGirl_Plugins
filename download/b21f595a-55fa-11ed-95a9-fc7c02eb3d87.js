@@ -2,7 +2,7 @@
 * @author https://t.me/sillyGirl_Plugin
 * @version v1.0.3
 * @create_at 2022-09-08 15:06:22
-* @description 饿了么提交与查询,需安装qinglong模块
+* @description 饿了么ck提交与查询,需安装qinglong模块
 * @title 饿了么
 * @rule elm ?
 * @rule 饿了么
@@ -11,9 +11,9 @@
 */
 
 /***********配置************ */
-//青龙面板地址:set elm host http://192.168.31.2:6700
-//青龙应用id:set elm client_id aaaaaa
-//青龙应用密钥:set elm client_secret AAAAAAAAAA
+//青龙面板地址:set elm ql_host http://192.168.31.2:6700
+//青龙应用id:set elm ql_client_id aaaaaa
+//青龙应用密钥:set elm ql_client_secret AAAAAAAAAA
 
 //饿了么变量名
 const EnvName="elmCookie"
@@ -35,18 +35,25 @@ const ql=require("qinglong")
 const db=new Bucket("elm_bind")
 const elm=new Bucket("elm")
 
-const Host=elm.get("host")
+const Host=elm.get("ql_host")
 //青龙应用id
-const CilentID=elm.get("client_id")
+const CilentID=elm.get("ql_client_id")
 //青龙应用密钥
-const CilentSecret=elm.get("client_secret")
+const CilentSecret=elm.get("ql_client_secret")
 function main(){
     if(!s.isAdmin() && s.getChatId() && GroupWhiteList.indexOf(s.getChatId())==-1){
         console.log("非白名单群聊，禁止使用")
         return
     }
+    else if(!Host || !CilentID || !CilentSecret){
+        let tip="请使用命令'set elm ql_host ip:端口'设置提交饿了么ck与查询饿了么收入的青龙面板地址"
+        tip+="请使用命令'set elm ql_client_id 应用id'设置青龙面板的应用id"
+        tip+="请使用命令'set elm ql_client_secret 应用密钥'设置青龙面板的应用密钥 "
+        s.reply(tip)
+        return
+    }
 
-    let temp=elm.get("token")
+    let temp=elm.get("ql_token")
     let token=null
     if(temp)
         token=JSON.parse(temp)
@@ -55,7 +62,7 @@ function main(){
         token=ql.Get_QL_Token(Host,CilentID,CilentSecret)
         if(token){
             envs=ql.Get_QL_Envs(Host,token)
-            elm.set("token",JSON.stringify(token))
+            elm.set("ql_token",JSON.stringify(token))
         }
         else{
             console.log("token failed")
