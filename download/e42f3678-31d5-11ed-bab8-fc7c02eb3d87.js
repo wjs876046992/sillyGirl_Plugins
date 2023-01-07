@@ -10,7 +10,6 @@
 */
 
 const s = sender
-const db= new Bucket("qinglong")
 const ql=require("qinglong")
 const st=require("something")
 
